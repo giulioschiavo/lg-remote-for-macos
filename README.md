@@ -49,7 +49,7 @@ LG NetCast TVs, non-webOS TVs and external HDMI set-top boxes are outside the su
 
 ## Installation
 
-Build the app from source using the instructions below. A packaged download will be added to [Releases](https://github.com/giulioschiavo/lg-remote-for-macos/releases) when available.
+Download [LG Remote 1.6 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.6/LG-Remote-1.6-macOS-arm64.zip) from [Release v1.6](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.6), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
 
 Current locally packaged builds are ad-hoc signed, **not Developer ID signed or notarized**. macOS may display an unverified-developer warning. Build from source if you prefer to inspect and compile the code. Developer ID signing and notarization are planned for easier distribution.
 
@@ -71,6 +71,22 @@ Move the Mac cursor inside the touchpad to move the TV pointer relatively. Click
 The touchpad **does not map its edges to the screen**, warp the Mac cursor or automatically center the TV pointer. The TV can apply speed-dependent movement, so travel distance can vary. Change pointer speed in Settings, or disable the pointer and use buttons.
 
 ## Wake-on-LAN
+
+### Finding the TV’s MAC address
+
+With the TV on, open **Settings → All Settings**. Common paths are:
+
+- **webOS 4.5 (2019):** General → About This TV → TV Information.
+- **webOS 5.0 (2020) and webOS 23 or later:** Support → TV Information.
+- **webOS 6.0 / 22 (2021–2022):** General → Devices → TV Management → TV Information.
+
+Copy the address for the connection in use: Wi-Fi and Ethernet have different MAC addresses. If you change connection type, update the app’s MAC setting. As an alternative, check your router’s connected-device list and identify the TV. The app also tries to retrieve the active adapter’s MAC after connecting when the field is empty; if it stays empty, enter it manually. Menu names vary by model and firmware; see [LG’s MAC address guide](https://www.lg.com/us/support/help-library/how-to-find-the-mac-address-on-your-lg-tv-CT10000018-20155444682287).
+
+### Enabling wake from standby
+
+On older webOS versions, look in **All Settings → General → Mobile TV On**. On newer versions, look under **General → Devices → External Devices → TV On With Mobile**. Enable **Turn on via Wi-Fi**, if available; a Bluetooth-only setting is insufficient for this app. Consult your model’s manual if the setting is elsewhere or absent. LG describes the option in its [webOS user guide](https://kr.eguide.lgappstv.com/manual/w25/w25_us21/enga.html).
+
+Keep the TV plugged in and connected to the network while in standby. Keep the Mac on the same local network. Then configure the app:
 
 1. On the TV, enable **Mobile TV On / TV On With Mobile → Turn on via Wi-Fi**, if available. Labels and paths vary with webOS version.
 2. Enter the MAC address of the TV’s active Wi-Fi or Ethernet adapter in Settings. Do not use its AirPlay device identifier.

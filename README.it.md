@@ -10,9 +10,9 @@ L’ho creata per mia comodità: volevo regolare il volume, cambiare canale o so
 
 ## Anteprima
 
-<img src="docs/images/lg-remote-en.png" alt="LG Remote for macOS in English" width="360">
+<img src="docs/images/lg-remote-it.png" alt="Telecomando LG per macOS in italiano" width="360">
 
-Interfaccia inglese con dati dimostrativi.
+Interfaccia italiana con dati dimostrativi.
 
 ### Icone dell’app
 
@@ -49,7 +49,7 @@ Sono fuori dall’ambito supportato le TV LG NetCast, le TV senza webOS e i deco
 
 ## Installazione
 
-Puoi compilare l’app dai sorgenti seguendo le istruzioni qui sotto. Il pacchetto scaricabile sarà aggiunto alla sezione [Releases](https://github.com/giulioschiavo/lg-remote-for-macos/releases) quando disponibile.
+Scarica [Telecomando LG 1.6 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.6/LG-Remote-1.6-macOS-arm64.zip) dalla [Release v1.6](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.6), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
 
 Le compilazioni locali attuali hanno firma ad-hoc: **non sono firmate con Developer ID né notarizzate**. macOS può mostrare un avviso sullo sviluppatore non verificato. Se preferisci esaminare e compilare il codice, usa i sorgenti. Firma Developer ID e notarizzazione sono previste per semplificare la distribuzione.
 
@@ -71,6 +71,22 @@ Muovi il cursore del Mac all’interno per spostare in modo relativo il puntator
 Il touchpad **non fa corrispondere i suoi bordi allo schermo**, non sposta automaticamente il cursore del Mac e non ricentra il puntatore della TV. La TV può modificare la distanza percorsa in base alla velocità. Puoi regolare la velocità nelle impostazioni oppure disabilitare il puntatore e usare i tasti.
 
 ## Accensione Wake-on-LAN
+
+### Dove trovare il MAC della TV
+
+Con la TV accesa, apri **Impostazioni → Tutte le impostazioni**. I percorsi più comuni sono:
+
+- **webOS 4.5 (2019):** Generali → Informazioni sulla TV → Informazioni TV.
+- **webOS 5.0 (2020) e webOS 23 o successivo:** Sostegno / Supporto → Informazioni TV.
+- **webOS 6.0 / 22 (2021–2022):** Generali → Dispositivi → Gestione TV → Informazioni TV.
+
+Copia il MAC della connessione utilizzata: Wi-Fi ed Ethernet hanno indirizzi diversi. Se cambi tipo di collegamento, aggiorna il MAC nell’app. In alternativa, cerca la TV nell’elenco dei dispositivi collegati al router. Quando il campo è vuoto, dopo il collegamento l’app prova anche a recuperare il MAC della scheda attiva; se non compare, inseriscilo manualmente. Le voci possono cambiare secondo modello e firmware: consulta la [guida LG al MAC della TV](https://www.lg.com/us/support/help-library/how-to-find-the-mac-address-on-your-lg-tv-CT10000018-20155444682287).
+
+### Abilitare l’accensione dallo standby
+
+Nelle versioni webOS meno recenti cerca **Tutte le impostazioni → Generali → Mobile TV attivo**. In quelle più recenti cerca in **Generali → Dispositivi → Dispositivi esterni → Accendi TV con dispositivo mobile**. Abilita **Attiva tramite Wi-Fi**, se disponibile: la sola opzione Bluetooth non basta per questa app. Se la voce è diversa o assente, consulta il manuale del tuo modello. LG descrive la funzione nel [manuale webOS](https://kr.eguide.lgappstv.com/manual/w25/w25_us21/enga.html).
+
+Lascia la TV alimentata e collegata alla rete anche in standby. Il Mac deve essere sulla stessa rete locale. Poi configura l’app:
 
 1. Sulla TV abilita **Mobile TV attivo / Accendi TV con dispositivo mobile → Attiva tramite Wi-Fi**, se disponibile. Nomi e percorso cambiano tra versioni webOS.
 2. Nelle impostazioni dell’app inserisci il MAC della scheda Wi-Fi o Ethernet utilizzata dalla TV. Non usare l’identificativo AirPlay.
