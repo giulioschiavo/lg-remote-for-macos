@@ -51,3 +51,12 @@ Aggiornato: 23 ottobre 2026.
 - Impostazioni reali renderizzate; area scorrevole per mantenere accessibili i controlli.
 - Notifica nativa implementata; consegna tramite Centro Notifiche non ancora verificata con una nuova Release effettiva.
 - Impostare esplicitamente v1.0 come Latest: v1.6 è una numerazione prelaunch storica. Le prossime Release devono essere marcate Latest.
+
+## Esito finale lancio
+
+- Release pubblica verificata: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0
+- GitHub Latest/API confermati su v1.0; download pubblico identico al pacchetto locale.
+- Sorgenti e documentazione pubblicati al commit c16ae4b3874cce0787e7e899c1d8f73f9f3bca36.
+- Copia locale aggiornata e avviata: `/Applications/Telecomando LG.app`, versione1.0 build14, binario identico alla distribuzione.
+- App precedente conservata in `publish/backup-local/Telecomando LG-pre-1.0.app`; preferenze e Portachiavi preservati.
+- Controllo automatico disattivato per impostazione iniziale: attivarlo nelle impostazioni dell’app e autorizzare le notifiche macOS.
