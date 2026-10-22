@@ -95,6 +95,14 @@ Keep the TV plugged in and connected to the network while in standby. Keep the M
 
 The TV must stay powered and its network hardware must support wake from standby. The app sends a local Wake-on-LAN packet; it does not offer wake over the internet, and sending a packet does not guarantee the TV has turned on.
 
+### If power-on stops working after a while in standby
+
+If the TV wakes shortly after being turned off but no longer responds after a longer wait, its network connection may become unavailable during standby. Disabling energy saving alone does not establish whether network wake remains available.
+
+With a Wi-Fi connection, first check **Mobile TV On / TV On With Mobile → Turn on via Wi-Fi**. Also try enabling **Quick Start+**, if your model offers it, then repeat the test. Quick Start+ changes standby behavior to allow a faster startup; it is a troubleshooting step, not a guarantee that network wake will work. Menu names and paths vary by model and firmware: see [LG’s Quick Start+ guide](https://www.lg.com/uk/support/product-support/troubleshoot/help-library/cs-CT00008333-20153130708672OLT/).
+
+Turn the TV off normally, leave it plugged in, and test power-on after one minute and again after 30–60 minutes. If it fails, also try LG ThinQ on a phone connected to the same Wi-Fi at that time. If both fail, investigate the TV’s standby/network settings and the network rather than assuming an app-only fault. If the TV’s network adapter is no longer listening, this app cannot force it to receive a Wake-on-LAN packet.
+
 ## Privacy
 
 TV commands and Wake-on-LAN traffic stay on the local network. The app has no analytics, ads, cloud account or tracking SDK. Pairing keys are stored in Keychain; TV address, wake settings and pointer preferences use local macOS preferences. Keys are not embedded in the app or repository.
