@@ -34,8 +34,8 @@ Aggiornato: 23 ottobre 2026.
 
 ## Consegna e attività
 
-- Pubblicare/verificare Release `v1.6` con lo ZIP originale e il suo checksum.
-- Pubblicare/verificare README bilingui e `docs/images/lg-remote-it.png`.
-- Annotare nel file di passaggio locale l’esito remoto finale.
+- COMPLETATO: Release `v1.6` pubblicata: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.6 ; download pubblico verificato, SHA-256 identico allo ZIP originale.
+- COMPLETATO: README bilingui e `docs/images/lg-remote-it.png` pubblicati nel commit `cf3b2da987f76e026861a63d8fbaaf6fa2a7e335`, a cui punta il tag v1.6.
+- COMPLETATO: esito remoto conservato in questo file; la Release contiene il binario originale, senza ricompilazione.
 - Futuro: test su altri modelli, WSS e discovery, controllo aggiornamenti facoltativo, Developer ID/notarizzazione, eventuale Intel.
 - Per ogni modifica futura leggere prima stato remoto e file correnti; preservare testo approvato e binario distribuito.
