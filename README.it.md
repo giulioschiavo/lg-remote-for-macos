@@ -95,6 +95,14 @@ Lascia la TV alimentata e collegata alla rete anche in standby. Il Mac deve esse
 
 La TV deve restare alimentata e la sua rete deve supportare il risveglio dallo standby. L’app invia un pacchetto Wake-on-LAN locale: non offre accensione via internet e l’invio non garantisce che la TV si sia accesa.
 
+### Se l’accensione smette di funzionare dopo un po’ in standby
+
+Se la TV si accende da remoto subito dopo lo spegnimento, ma non dopo un’attesa più lunga, la connessione di rete potrebbe diventare indisponibile durante lo standby. Disattivare il risparmio energetico, da solo, non permette di stabilire se l’accensione via rete resti disponibile.
+
+Con una connessione Wi-Fi, controlla prima **Mobile TV attivo / Accendi TV con dispositivo mobile → Attiva tramite Wi-Fi**. Prova anche ad attivare **Quick Start+ / Avvio rapido+**, se il modello lo prevede, e ripeti la prova. Quick Start+ modifica lo standby per consentire un avvio più rapido: è una verifica da fare, non una garanzia di accensione via rete. Nomi e percorsi cambiano secondo modello e firmware: consulta la [guida LG a Quick Start+](https://www.lg.com/uk/support/product-support/troubleshoot/help-library/cs-CT00008333-20153130708672OLT/).
+
+Spegni normalmente la TV, lasciala alimentata e prova ad accenderla dopo un minuto e poi dopo 30–60 minuti. Se non funziona, prova nello stesso momento anche con LG ThinQ da un telefono collegato allo stesso Wi-Fi. Se falliscono entrambi, verifica standby, impostazioni di rete della TV e rete locale prima di attribuire il problema soltanto all’app. Se la scheda di rete della TV non è più in ascolto, questa app non può forzarla a ricevere il pacchetto Wake-on-LAN.
+
 ## Privacy
 
 Comandi TV e Wake-on-LAN restano sulla rete locale. Non ci sono statistiche d’uso, pubblicità, account cloud o strumenti di tracciamento. Le chiavi di associazione sono nel Portachiavi; indirizzo TV, accensione e velocità sono nelle preferenze locali di macOS. Nessuna chiave è incorporata nell’app o nel repository.
