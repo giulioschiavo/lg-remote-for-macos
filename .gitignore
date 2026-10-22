@@ -1,0 +1,10 @@
+.DS_Store
+**/.build-cache/
+**/.icon-work/
+**/dist/
+*.zip
+*.dmg
+*.xcuserstate
+.env
+*.p12
+*.mobileprovision
