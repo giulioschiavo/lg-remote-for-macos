@@ -9,6 +9,7 @@ enum PreviewExport {
         app.setActivationPolicy(.regular)
         let tv = TVRemote()
         tv.connected = true; tv.status = L("Collegata")
+        tv.settings = CommandLine.arguments.contains("--preview-settings")
         tv.volume = 24; tv.volumeKnown = true; tv.channel = "1 · Live TV"
         tv.inputs = [TVInput(id: "HDMI_1", label: "HDMI 1", connected: true)]
         let host = NSHostingController(rootView: RemoteView(tv: tv))

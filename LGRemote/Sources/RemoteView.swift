@@ -11,6 +11,7 @@ final class RemotePanelState: ObservableObject {
 @MainActor
 struct RemoteView: View {
     @ObservedObject var tv: TVRemote
+    @ObservedObject private var updates = UpdateChecker.shared
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @StateObject private var ui = RemotePanelState()
     @AppStorage("magicRemoteEnabled") private var magicRemoteEnabled = true
@@ -19,7 +20,14 @@ struct RemoteView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
-            if tv.settings { settings } else { controls }
+            if let release = updates.available {
+                HStack {
+                    Label(LF("Disponibile la versione %@", release.tag_name), systemImage: "arrow.down.circle")
+                    Spacer()
+                    Button(L("Apri Release")) { updates.openRelease() }
+                }.font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
+            }
+            if tv.settings { ScrollView { settings }.frame(height: 470) } else { controls }
             if let error = tv.error {
                 HStack(alignment: .top, spacing: 7) {
                     Image(systemName: "exclamationmark.circle.fill")
@@ -207,6 +215,14 @@ struct RemoteView: View {
             }.pickerStyle(.segmented).labelsHidden()
             }
             Divider().padding(.top, 2)
+            Text(L("Aggiornamenti")).font(.headline)
+            Toggle(L("Controlla automaticamente"), isOn: Binding(get: { updates.automatic }, set: { updates.setAutomatic($0) }))
+            Text(L("Contatta GitHub all’avvio e ogni 24 ore mentre l’app è aperta. Nessuna installazione automatica."))
+                .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Button(L("Controlla ora")) { updates.check(manual: true) }.disabled(updates.checking)
+            if !updates.message.isEmpty {
+                Text(updates.message).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
             HStack {
                 Text(L("Telecomando LG"))
                 Spacer()

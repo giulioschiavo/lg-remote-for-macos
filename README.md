@@ -49,7 +49,7 @@ LG NetCast TVs, non-webOS TVs and external HDMI set-top boxes are outside the su
 
 ## Installation
 
-Download [LG Remote 1.6 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.6/LG-Remote-1.6-macOS-arm64.zip) from [Release v1.6](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.6), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
+Download [LG Remote 1.0 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0/LG-Remote-1.0-macOS-arm64.zip) from [Release v1.0](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
 
 Current locally packaged builds are ad-hoc signed, **not Developer ID signed or notarized**. macOS may display an unverified-developer warning. Build from source if you prefer to inspect and compile the code. Developer ID signing and notarization are planned for easier distribution.
 
@@ -99,7 +99,7 @@ The TV must stay powered and its network hardware must support wake from standby
 
 TV commands and Wake-on-LAN traffic stay on the local network. The app has no analytics, ads, cloud account or tracking SDK. Pairing keys are stored in Keychain; TV address, wake settings and pointer preferences use local macOS preferences. Keys are not embedded in the app or repository.
 
-There is **no automatic update check in this version**. A future opt-in check against GitHub Releases is planned; that would make an internet request to GitHub and will be documented when implemented.
+Version 1.0 includes a default-off, opt-in check against GitHub Releases at startup and then every 24 hours while the app is running. A manual check is always available. When a release is available, the app shows an in-app banner and, if macOS notification permission is available, a native notification. Opening the release link is always manual: the app never installs or downloads an update automatically. Internet requests go only to GitHub when the user has enabled the check or started a manual check. There are no analytics or tracking requests.
 
 ## Build from source
 
@@ -127,7 +127,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md). This is
 
 - Broader real-device compatibility testing.
 - Secure WebSocket transport and improved TV discovery.
-- GitHub Releases update checks, without silent installation.
 - Developer ID signing/notarization and potential Intel builds.
 
 ## License and credits

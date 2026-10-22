@@ -49,7 +49,7 @@ Sono fuori dall’ambito supportato le TV LG NetCast, le TV senza webOS e i deco
 
 ## Installazione
 
-Scarica [Telecomando LG 1.6 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.6/LG-Remote-1.6-macOS-arm64.zip) dalla [Release v1.6](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.6), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
+Scarica [Telecomando LG 1.0 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0/LG-Remote-1.0-macOS-arm64.zip) dalla [Release v1.0](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
 
 Le compilazioni locali attuali hanno firma ad-hoc: **non sono firmate con Developer ID né notarizzate**. macOS può mostrare un avviso sullo sviluppatore non verificato. Se preferisci esaminare e compilare il codice, usa i sorgenti. Firma Developer ID e notarizzazione sono previste per semplificare la distribuzione.
 
@@ -99,7 +99,7 @@ La TV deve restare alimentata e la sua rete deve supportare il risveglio dallo s
 
 Comandi TV e Wake-on-LAN restano sulla rete locale. Non ci sono statistiche d’uso, pubblicità, account cloud o strumenti di tracciamento. Le chiavi di associazione sono nel Portachiavi; indirizzo TV, accensione e velocità sono nelle preferenze locali di macOS. Nessuna chiave è incorporata nell’app o nel repository.
 
-Questa versione **non controlla automaticamente gli aggiornamenti**. È previsto un controllo facoltativo tramite GitHub Releases: comporterà una richiesta internet a GitHub e sarà documentato quando verrà implementato.
+La versione 1.0 include un controllo facoltativo, disattivato in modo predefinito, tramite GitHub Releases: parte all’avvio e poi ogni 24 ore mentre l’app resta aperta. Il controllo manuale è sempre disponibile. Quando c’è una release disponibile, l’app mostra un banner interno e, se macOS ha concesso il permesso, una notifica nativa. L’apertura del link alla release resta manuale: l’app non installa né scarica mai aggiornamenti automaticamente. Le richieste internet vanno solo a GitHub quando il controllo è stato attivato dall’utente o avviato manualmente. Non ci sono statistiche d’uso né richieste di tracciamento.
 
 ## Compilazione dai sorgenti
 
@@ -127,7 +127,6 @@ Vedi [CONTRIBUTING.md](CONTRIBUTING.md) e [CHANGELOG.md](CHANGELOG.md). È un pr
 
 - Test su altri modelli reali.
 - Collegamento WebSocket cifrato e ricerca delle TV sulla rete.
-- Controllo degli aggiornamenti tramite GitHub Releases, senza installazioni silenziose.
 - Firma Developer ID, notarizzazione ed eventuali versioni Intel.
 
 ## Licenza e crediti

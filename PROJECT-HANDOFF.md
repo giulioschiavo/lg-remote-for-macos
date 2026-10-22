@@ -6,9 +6,10 @@ Aggiornato: 23 ottobre 2026.
 
 - Repository pubblico: https://github.com/giulioschiavo/lg-remote-for-macos
 - Cartella di consegna: `publish/lg-remote-for-macos` nel workspace originale.
-- Pacchetto approvato per la Release: `Downloads/LG-Remote-1.6-macOS-arm64.zip`.
-- Versione 1.6, build 13; bundle `it.giulio.LGRemote`; Apple Silicon arm64, macOS 13+.
-- SHA-256 ZIP: `e02357c6f8b47c5d574cf047ac4117b1a80cc9ef42ed717c8f8c7f79f35d3a5d`.
+- Pacchetto approvato per la Release: `Downloads/LG-Remote-1.0-macOS-arm64.zip`.
+- Versione 1.0, build 14; bundle `it.giulio.LGRemote`; Apple Silicon arm64, macOS 13+.
+- SHA-256 ZIP: `13f0ee1708ef62c124eadb2460a241e86a41bbb4e90e29326acf836fd6bff038`.
+- Launch status: version 1.0/build 14 is the current release. The earlier 1.6 numbering was prelaunch; users on 1.6 must replace it manually once with 1.0.
 
 ## Decisioni da preservare
 
@@ -17,8 +18,12 @@ Aggiornato: 23 ottobre 2026.
 - Accensione tramite Wake-on-LAN solo sulla rete locale, non via internet. Il pacchetto inviato non prova che la TV si sia accesa.
 - Wi-Fi ed Ethernet hanno MAC distinti; usare quello della connessione attiva, non l’identificativo AirPlay.
 - WebSocket attuale `ws://<TV>:3000`; `wss://` sulla 3001 non implementato.
-- Chiavi nel Portachiavi, preferenze locali; nessun account cloud, analytics o controllo aggiornamenti automatico.
+- Chiavi nel Portachiavi, preferenze locali; nessun account cloud o analytics.
 - Firma ad-hoc; nessuna firma Developer ID o notarizzazione.
+- Version 1.0 adds a default-off opt-in GitHub Releases check at startup and every 24 hours while running; a manual check is always available.
+- Update results appear in an in-app available banner and, when notification permission is available, a native notification. Opening the release link is manual; there is no automatic download or installation.
+- Requests go only to GitHub when the opt-in or manual check is used. No analytics or tracking requests are added.
+- Version 1.6 cannot check for updates and must be replaced manually with 1.0.
 - Touchpad relativo, senza mappatura assoluta o ricentraggio; puntatore disattivabile.
 - Documentazione italiana e inglese, anteprime con dati sintetici, icone chiara/scura.
 
@@ -28,14 +33,21 @@ Aggiornato: 23 ottobre 2026.
 - Sorgenti, localizzazioni, plist, script e icone remoti identici ai file locali.
 - ZIP integro; versione e architettura confermate; firma verificata; self-test superato in italiano e inglese.
 - Screenshot italiano controllato visivamente. README aggiornati con MAC, abilitazione accensione e link al pacchetto Release.
-- Il binario in `LGRemote/dist` differisce da quello nello ZIP: non sostituire lo ZIP con una ricompilazione senza una verifica dedicata.
+- Pacchetto 1.0 ricostruito dai sorgenti aggiornati; il vecchio ZIP 1.6 resta conservato.
 - La cartella publish originale aveva un repository Git senza commit e senza remoto; non usare uno stato staged come prova di pubblicazione.
 - Nessun nuovo test su TV fisica eseguito durante questa ripresa.
+- La documentazione è stata aggiornata per il lancio v1.0; il precedente v1.6 è conservato solo come riferimento archivistico prelaunch.
 
 ## Consegna e attività
 
-- COMPLETATO: Release `v1.6` pubblicata: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.6 ; download pubblico verificato, SHA-256 identico allo ZIP originale.
-- COMPLETATO: README bilingui e `docs/images/lg-remote-it.png` pubblicati nel commit `cf3b2da987f76e026861a63d8fbaaf6fa2a7e335`, a cui punta il tag v1.6.
-- COMPLETATO: esito remoto conservato in questo file; la Release contiene il binario originale, senza ricompilazione.
-- Futuro: test su altri modelli, WSS e discovery, controllo aggiornamenti facoltativo, Developer ID/notarizzazione, eventuale Intel.
+- COMPLETATO: preparazione della Release `v1.0` con il pacchetto `Downloads/LG-Remote-1.0-macOS-arm64.zip`; la pubblicazione remota è gestita dal task principale.
+- ARCHIVIO: la precedente Release `v1.6` e il relativo pacchetto restano riferimenti storici del prelaunch.
+- Futuro: test su altri modelli, WSS e discovery, Developer ID/notarizzazione, eventuale Intel.
 - Per ogni modifica futura leggere prima stato remoto e file correnti; preservare testo approvato e binario distribuito.
+
+## Validazione 1.0
+
+- Build arm64 completata; self-test IT/EN e test versioni/decodifica/link Release superati, inclusa risposta reale GitHub.
+- Impostazioni reali renderizzate; area scorrevole per mantenere accessibili i controlli.
+- Notifica nativa implementata; consegna tramite Centro Notifiche non ancora verificata con una nuova Release effettiva.
+- Impostare esplicitamente v1.0 come Latest: v1.6 è una numerazione prelaunch storica. Le prossime Release devono essere marcate Latest.

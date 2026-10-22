@@ -89,3 +89,15 @@
 "Invio broadcast non consentito." = "Invio broadcast non consentito.";
 "L’indirizzo broadcast deve essere un indirizzo IPv4." = "L’indirizzo broadcast deve essere un indirizzo IPv4.";
 "Invio Wake-on-LAN non riuscito: controlla la rete locale." = "Invio Wake-on-LAN non riuscito: controlla la rete locale.";
+"Notifiche non consentite: gli aggiornamenti restano visibili nell’app." = "Notifiche non consentite: gli aggiornamenti restano visibili nell’app.";
+"Controllo aggiornamenti…" = "Controllo aggiornamenti…";
+"La versione installata è aggiornata." = "La versione installata è aggiornata.";
+"Disponibile la versione %@" = "Disponibile la versione %@";
+"Controllo non riuscito. Riprova più tardi." = "Controllo non riuscito. Riprova più tardi.";
+"Aggiornamento disponibile" = "Aggiornamento disponibile";
+"LG Remote %@ è disponibile. Apri la Release per scaricarlo." = "LG Remote %@ è disponibile. Apri la Release per scaricarlo.";
+"Apri Release" = "Apri Release";
+"Aggiornamenti" = "Aggiornamenti";
+"Controlla automaticamente" = "Controlla automaticamente";
+"Contatta GitHub all’avvio e ogni 24 ore mentre l’app è aperta. Nessuna installazione automatica." = "Contatta GitHub all’avvio e ogni 24 ore mentre l’app è aperta. Nessuna installazione automatica.";
+"Controlla ora" = "Controlla ora";
