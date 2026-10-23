@@ -1,3 +1,5 @@
+![LG Remote for macOS — Your LG webOS TV, right from your menu bar](docs/images/social-preview-apple-1280x640.png)
+
 # LG Remote for macOS
 
 [Italiano](README.it.md) · English

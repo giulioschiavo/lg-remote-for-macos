@@ -1,3 +1,5 @@
+![LG Remote for macOS — La tua TV LG webOS dalla barra dei menu](docs/images/social-preview-apple-1280x640.png)
+
 # Telecomando LG per macOS
 
 Italiano · [English](README.md)
