@@ -8,10 +8,18 @@ enum PreviewExport {
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
         let tv = TVRemote()
+        tv.host = "LGwebOSTV.local"; tv.mac = "02:00:00:00:00:01"; tv.broadcast = "192.168.1.255"
         tv.connected = true; tv.status = L("Collegata")
         tv.settings = CommandLine.arguments.contains("--preview-settings")
         tv.volume = 24; tv.volumeKnown = true; tv.channel = "1 · Live TV"
         tv.inputs = [TVInput(id: "HDMI_1", label: "HDMI 1", connected: true)]
+        if CommandLine.arguments.contains("--preview-discovery-empty") || CommandLine.arguments.contains("--preview-discovery-found") {
+            tv.connected = false; tv.host = ""; tv.mac = ""; tv.status = L("Pronto per collegarsi"); tv.settings = true
+        }
+        if CommandLine.arguments.contains("--preview-discovery-found") {
+            tv.discoveredTVs = [DiscoveredTV(host: "192.0.2.10", name: "LG webOS TV")]
+            tv.discoveryMessage = L("Scegli la TV e conferma la richiesta sul televisore.")
+        }
         let host = NSHostingController(rootView: RemoteView(tv: tv))
         let size = host.sizeThatFits(in: NSSize(width: 360, height: 2000))
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: false)

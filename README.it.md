@@ -51,18 +51,23 @@ Sono fuori dall’ambito supportato le TV LG NetCast, le TV senza webOS e i deco
 
 ## Installazione
 
-Scarica [Telecomando LG 1.0 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0/LG-Remote-1.0-macOS-arm64.zip) dalla [Release v1.0](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
+Scarica [Telecomando LG 1.0.1 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.1/LG-Remote-1.0.1-macOS-arm64.zip) dalla [Release v1.0.1](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.1), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
 
 Le compilazioni locali attuali hanno firma ad-hoc: **non sono firmate con Developer ID né notarizzate**. macOS può mostrare un avviso sullo sviluppatore non verificato. Se preferisci esaminare e compilare il codice, usa i sorgenti. Firma Developer ID e notarizzazione sono previste per semplificare la distribuzione.
 
 ## Primo collegamento
 
 1. Accendi la TV e apri l’app da Applicazioni.
-2. Nelle impostazioni inserisci il nome di rete o l’indirizzo IPv4 della TV. Il valore iniziale è `LGwebOSTV.local`, ma sulla tua rete potrebbe essere diverso.
-3. Premi **Salva e collega** e accetta la richiesta sulla TV.
-4. Consenti l’accesso alla rete locale se macOS lo richiede.
+2. In Impostazioni → TV premi **Cerca TV**, seleziona il televisore e premi **Collega**.
+3. Accetta la richiesta sulla TV e consenti l’accesso alla rete locale se macOS lo richiede.
 
-L’associazione viene salvata nel Portachiavi: normalmente basta una sola conferma. Ripristino della TV, revoca dei permessi o ampliamento dei permessi possono richiedere una nuova associazione. In quel caso usa **Nuova associazione** nelle impostazioni.
+Se la ricerca non è disponibile, apri **Inserisci indirizzo manualmente** e indica il nome di rete o l’indirizzo IPv4. La ricerca richiede una TV accesa e visibile sulla stessa rete locale.
+
+L’associazione viene salvata nel Portachiavi. **Ripeti associazione** richiede una nuova approvazione e conserva la chiave precedente fino al completamento. **Rimuovi associazione** chiede conferma e cancella il collegamento TV e le impostazioni di accensione salvate.
+
+Per le TV selezionate tramite ricerca, l’app ricorda anche l’identità del dispositivo. Se all’avvio dell’app l’IP salvato non risponde, esegue una sola ricerca locale limitata per ritrovare quella TV e aggiorna l’IP quando il risultato è univoco. Per le associazioni manuali già esistenti, seleziona una volta la TV tramite **Cerca TV** per memorizzarne l’identità. I comandi continuano a usare l’IP: il MAC serve al Wake-on-LAN. Non ci sono scansioni periodiche della TV, servizi al login o processi ausiliari in background.
+
+Le impostazioni sono divise nelle schede **TV**, **Accensione** e **App**.
 
 Un clic sull’icona nella barra apre o nasconde il pannello. Anche Escape e un clic esterno lo nascondono.
 
@@ -92,7 +97,7 @@ Con la TV accesa, apri **Impostazioni → Tutte le impostazioni**. I percorsi pi
 - **webOS 5.0 (2020) e webOS 23 o successivo:** Sostegno / Supporto → Informazioni TV.
 - **webOS 6.0 / 22 (2021–2022):** Generali → Dispositivi → Gestione TV → Informazioni TV.
 
-Copia il MAC della connessione utilizzata: Wi-Fi ed Ethernet hanno indirizzi diversi. Se cambi tipo di collegamento, aggiorna il MAC nell’app. In alternativa, cerca la TV nell’elenco dei dispositivi collegati al router. Quando il campo è vuoto, dopo il collegamento l’app prova anche a recuperare il MAC della scheda attiva; se non compare, inseriscilo manualmente. Le voci possono cambiare secondo modello e firmware: consulta la [guida LG al MAC della TV](https://www.lg.com/us/support/help-library/how-to-find-the-mac-address-on-your-lg-tv-CT10000018-20155444682287).
+Copia il MAC della connessione utilizzata: Wi-Fi ed Ethernet hanno indirizzi diversi. Se cambi tipo di collegamento, aggiorna il MAC nell’app. In alternativa, cerca la TV nell’elenco dei dispositivi collegati al router. In Impostazioni → Accensione premi **Rileva MAC dalla TV**. Se la TV conferma una sola scheda attiva e il campo è vuoto, il MAC può essere impostato automaticamente. Se restituisce più schede o non indica quella attiva, scegli il candidato Wi-Fi o Ethernet corretto con **Usa questo MAC**. I valori già salvati vengono conservati; resta disponibile l’inserimento manuale. L’app può anche proporre un valore dalla cache ARP locale, da confermare. Le voci possono cambiare secondo modello e firmware: consulta la [guida LG al MAC della TV](https://www.lg.com/us/support/help-library/how-to-find-the-mac-address-on-your-lg-tv-CT10000018-20155444682287).
 
 ### Abilitare l’accensione dallo standby
 
@@ -101,8 +106,8 @@ Nelle versioni webOS meno recenti cerca **Tutte le impostazioni → Generali →
 Lascia la TV alimentata e collegata alla rete anche in standby. Il Mac deve essere sulla stessa rete locale. Poi configura l’app:
 
 1. Sulla TV abilita **Mobile TV attivo / Accendi TV con dispositivo mobile → Attiva tramite Wi-Fi**, se disponibile. Nomi e percorso cambiano tra versioni webOS.
-2. Nelle impostazioni dell’app inserisci il MAC della scheda Wi-Fi o Ethernet utilizzata dalla TV. Non usare l’identificativo AirPlay.
-3. Imposta il broadcast della sottorete. `192.168.1.255` è adatto solo a una rete `192.168.1.x` con maschera `255.255.255.0`.
+2. In Impostazioni → Accensione rileva o inserisci il MAC della scheda utilizzata dalla TV. Non usare l’identificativo AirPlay.
+3. Verifica il broadcast, calcolato automaticamente quando la sottorete locale è univoca; inseriscilo manualmente se necessario. `192.168.1.255` è adatto solo a una rete `192.168.1.x` con maschera `255.255.255.0`.
 4. Salva, metti la TV in standby e prova **Accendi**.
 
 La TV deve restare alimentata e la sua rete deve supportare il risveglio dallo standby. L’app invia un pacchetto Wake-on-LAN locale: non offre accensione via internet e l’invio non garantisce che la TV si sia accesa.
@@ -117,9 +122,9 @@ Spegni normalmente la TV, lasciala alimentata e prova ad accenderla dopo un minu
 
 ## Privacy
 
-Comandi TV e Wake-on-LAN restano sulla rete locale. Non ci sono statistiche d’uso, pubblicità, account cloud o strumenti di tracciamento. Le chiavi di associazione sono nel Portachiavi; indirizzo TV, accensione e velocità sono nelle preferenze locali di macOS. Nessuna chiave è incorporata nell’app o nel repository.
+Ricerca TV, comandi e Wake-on-LAN restano sulla rete locale. Non ci sono statistiche d’uso, pubblicità, account cloud o strumenti di tracciamento. Le chiavi di associazione sono nel Portachiavi; indirizzo e identità TV, accensione e velocità sono nelle preferenze locali di macOS. Nessuna chiave è incorporata nell’app o nel repository.
 
-La versione 1.0 include un controllo facoltativo, disattivato in modo predefinito, tramite GitHub Releases: parte all’avvio e poi ogni 24 ore mentre l’app resta aperta. Il controllo manuale è sempre disponibile. Quando c’è una release disponibile, l’app mostra un banner interno e, se macOS ha concesso il permesso, una notifica nativa. L’apertura del link alla release resta manuale: l’app non installa né scarica mai aggiornamenti automaticamente. Le richieste internet vanno solo a GitHub quando il controllo è stato attivato dall’utente o avviato manualmente. Non ci sono statistiche d’uso né richieste di tracciamento.
+L’app include un controllo facoltativo, disattivato in modo predefinito, tramite GitHub Releases: parte all’avvio e poi ogni 24 ore mentre l’app resta aperta. Il controllo manuale è sempre disponibile. Quando c’è una release disponibile, l’app mostra un banner interno e, se macOS ha concesso il permesso, una notifica nativa. L’apertura del link alla release resta manuale: l’app non installa né scarica mai aggiornamenti automaticamente. Le richieste internet vanno solo a GitHub quando il controllo è stato attivato dall’utente o avviato manualmente. Non ci sono statistiche d’uso né richieste di tracciamento.
 
 ## Compilazione dai sorgenti
 
@@ -133,7 +138,7 @@ cd LGRemote
 open "dist/Telecomando LG.app"
 ```
 
-L’app usa SwiftUI, AppKit, Foundation e Security. Per compilarla non servono Node.js, Python o pacchetti di terze parti. Python serve solo allo script facoltativo per ricostruire le icone. Lo script produce un’app arm64 con firma ad-hoc e non installa servizi in background.
+L’app usa SwiftUI, AppKit, Foundation, Security e UserNotifications. Per compilarla non servono Node.js, Python o pacchetti di terze parti. Python serve solo allo script facoltativo per ricostruire le icone. Lo script produce un’app arm64 con firma ad-hoc e non installa servizi in background.
 
 Le immagini PNG/ICNS includono icone chiare e scure. L’icona della barra è un modello monocromatico. Non vengono dichiarate varianti automatiche dell’icona nel Finder; l’icona dell’app in esecuzione segue l’aspetto di sistema.
 
@@ -146,7 +151,7 @@ Vedi [CONTRIBUTING.md](CONTRIBUTING.md) e [CHANGELOG.md](CHANGELOG.md). È un pr
 ## Sviluppi previsti
 
 - Test su altri modelli reali.
-- Collegamento WebSocket cifrato e ricerca delle TV sulla rete.
+- Collegamento WebSocket cifrato e test su altre configurazioni di rete.
 - Firma Developer ID, notarizzazione ed eventuali versioni Intel.
 
 ## Licenza e crediti

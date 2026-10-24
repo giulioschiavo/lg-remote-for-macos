@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             tv.status = L("Anteprima · dati dimostrativi")
             tv.volume = 14; tv.volumeKnown = true; tv.connected = true; tv.muted = true
         }
+        if !preview && tv.host.isEmpty { tv.settings = true; UserDefaults.standard.set(0, forKey: "settingsPane") }
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = item.button {
             button.image = RemoteIcon.menuBar()

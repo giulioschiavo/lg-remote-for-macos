@@ -51,18 +51,23 @@ LG NetCast TVs, non-webOS TVs and external HDMI set-top boxes are outside the su
 
 ## Installation
 
-Download [LG Remote 1.0 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0/LG-Remote-1.0-macOS-arm64.zip) from [Release v1.0](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
+Download [LG Remote 1.0.1 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.1/LG-Remote-1.0.1-macOS-arm64.zip) from [Release v1.0.1](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.1), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
 
 Current locally packaged builds are ad-hoc signed, **not Developer ID signed or notarized**. macOS may display an unverified-developer warning. Build from source if you prefer to inspect and compile the code. Developer ID signing and notarization are planned for easier distribution.
 
 ## First connection
 
 1. Turn on the TV and open the app from Applications.
-2. Open Settings and enter the TV’s hostname or IPv4 address. `LGwebOSTV.local` is the default, but it may differ on your network.
-3. Choose **Save and connect**, then approve the prompt on the TV.
-4. Grant local network access if macOS asks.
+2. In Settings → TV, choose **Find TV**, select your TV and choose **Connect**.
+3. Approve the pairing request on the TV and allow local network access if macOS asks.
 
-Pairing is saved in Keychain, so you normally only approve once. A TV reset, permission revocation or an expanded permission request can require pairing again. Use **Pair again** in Settings when needed.
+If discovery is unavailable, expand **Enter address manually** and enter the hostname or IPv4 address. Discovery requires the TV to be awake and visible on the same local network.
+
+Pairing is stored in Keychain. **Pair Again** requests a new approval while preserving the previous key until success. **Remove Pairing** asks for confirmation and clears the saved TV connection and wake settings.
+
+For TVs selected through discovery, the app remembers their device identity. If the saved IP fails at app startup, it performs one bounded local search for that same TV and updates its IP when the match is unambiguous. Existing manual associations can obtain this identity by selecting the TV through **Find TV** once. This does not replace the IP used for commands: the MAC is used for Wake-on-LAN. There is no periodic TV scan, login service or background helper.
+
+Settings are divided into **TV**, **Power On** and **App** tabs.
 
 Click the menu bar icon to open or hide the panel. Escape and clicking outside also hide it.
 
@@ -92,7 +97,7 @@ With the TV on, open **Settings → All Settings**. Common paths are:
 - **webOS 5.0 (2020) and webOS 23 or later:** Support → TV Information.
 - **webOS 6.0 / 22 (2021–2022):** General → Devices → TV Management → TV Information.
 
-Copy the address for the connection in use: Wi-Fi and Ethernet have different MAC addresses. If you change connection type, update the app’s MAC setting. As an alternative, check your router’s connected-device list and identify the TV. The app also tries to retrieve the active adapter’s MAC after connecting when the field is empty; if it stays empty, enter it manually. Menu names vary by model and firmware; see [LG’s MAC address guide](https://www.lg.com/us/support/help-library/how-to-find-the-mac-address-on-your-lg-tv-CT10000018-20155444682287).
+Copy the address for the connection in use: Wi-Fi and Ethernet have different MAC addresses. If you change connection type, update the app’s MAC setting. As an alternative, check your router’s connected-device list and identify the TV. In Settings → Power On, use **Detect MAC from TV**. A single confirmed-active adapter can fill an empty MAC field automatically. If the TV returns several adapters or does not identify the active one, select the matching Wi-Fi or Ethernet candidate with **Use This MAC**. Saved values are preserved; manual entry remains available. The app may also suggest a value from the local ARP cache for you to confirm. Menu names vary by model and firmware; see [LG’s MAC address guide](https://www.lg.com/us/support/help-library/how-to-find-the-mac-address-on-your-lg-tv-CT10000018-20155444682287).
 
 ### Enabling wake from standby
 
@@ -101,8 +106,8 @@ On older webOS versions, look in **All Settings → General → Mobile TV On**. 
 Keep the TV plugged in and connected to the network while in standby. Keep the Mac on the same local network. Then configure the app:
 
 1. On the TV, enable **Mobile TV On / TV On With Mobile → Turn on via Wi-Fi**, if available. Labels and paths vary with webOS version.
-2. Enter the MAC address of the TV’s active Wi-Fi or Ethernet adapter in Settings. Do not use its AirPlay device identifier.
-3. Set the subnet’s broadcast address. `192.168.1.255` is only appropriate for a `192.168.1.x` network with a `255.255.255.0` mask.
+2. Detect or enter the MAC of the active adapter in Settings → Power On. Do not use its AirPlay device identifier.
+3. Review the broadcast address, calculated automatically when the local subnet is unambiguous; enter it manually if needed. `192.168.1.255` is only appropriate for a `192.168.1.x` network with a `255.255.255.0` mask.
 4. Save, put the TV in standby and try **Turn On**.
 
 The TV must stay powered and its network hardware must support wake from standby. The app sends a local Wake-on-LAN packet; it does not offer wake over the internet, and sending a packet does not guarantee the TV has turned on.
@@ -117,9 +122,9 @@ Turn the TV off normally, leave it plugged in, and test power-on after one minut
 
 ## Privacy
 
-TV commands and Wake-on-LAN traffic stay on the local network. The app has no analytics, ads, cloud account or tracking SDK. Pairing keys are stored in Keychain; TV address, wake settings and pointer preferences use local macOS preferences. Keys are not embedded in the app or repository.
+TV discovery, commands and Wake-on-LAN traffic stay on the local network. The app has no analytics, ads, cloud account or tracking SDK. Pairing keys are stored in Keychain; TV address and device identity, wake settings and pointer preferences use local macOS preferences. Keys are not embedded in the app or repository.
 
-Version 1.0 includes a default-off, opt-in check against GitHub Releases at startup and then every 24 hours while the app is running. A manual check is always available. When a release is available, the app shows an in-app banner and, if macOS notification permission is available, a native notification. Opening the release link is always manual: the app never installs or downloads an update automatically. Internet requests go only to GitHub when the user has enabled the check or started a manual check. There are no analytics or tracking requests.
+The app includes a default-off, opt-in check against GitHub Releases at startup and then every 24 hours while the app is running. A manual check is always available. When a release is available, the app shows an in-app banner and, if macOS notification permission is available, a native notification. Opening the release link is always manual: the app never installs or downloads an update automatically. Internet requests go only to GitHub when the user has enabled the check or started a manual check. There are no analytics or tracking requests.
 
 ## Build from source
 
@@ -133,7 +138,7 @@ cd LGRemote
 open "dist/Telecomando LG.app"
 ```
 
-The project uses SwiftUI, AppKit, Foundation and Security. No Node.js, Python or third-party package is needed to build the app. Python is only used by the optional icon packaging script. The build script produces an arm64 app and applies an ad-hoc signature. It does not install background services.
+The project uses SwiftUI, AppKit, Foundation, Security and UserNotifications. No Node.js, Python or third-party package is needed to build the app. Python is only used by the optional icon packaging script. The build script produces an arm64 app and applies an ad-hoc signature. It does not install background services.
 
 The checked-in PNG/ICNS assets include light and dark icon artwork. Menu bar artwork is a monochrome template. System Finder icon appearance variants are not claimed; the runtime app icon follows appearance.
 
@@ -146,7 +151,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md). This is
 ## Roadmap
 
 - Broader real-device compatibility testing.
-- Secure WebSocket transport and improved TV discovery.
+- Secure WebSocket transport and broader network compatibility testing.
 - Developer ID signing/notarization and potential Intel builds.
 
 ## License and credits

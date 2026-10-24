@@ -7,14 +7,14 @@
 <key>CFBundleExecutable</key><string>LGRemote</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
-<key>CFBundleShortVersionString</key><string>1.0</string>
-<key>CFBundleVersion</key><string>14</string>
+<key>CFBundleShortVersionString</key><string>1.0.1</string>
+<key>CFBundleVersion</key><string>19</string>
 <key>CFBundleDevelopmentRegion</key><string>en</string>
 <key>CFBundleLocalizations</key><array><string>en</string><string>it</string></array>
 <key>LSMinimumSystemVersion</key><string>13.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
-<key>NSLocalNetworkUsageDescription</key><string>Collegamento alla TV LG sulla tua rete per usare il telecomando.</string>
+<key>NSLocalNetworkUsageDescription</key><string>Ricerca e collegamento alla TV LG sulla rete locale per usare il telecomando.</string>
 <key>NSBonjourServices</key><array><string>_airplay._tcp</string></array>
 <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/><key>NSAllowsArbitraryLoads</key><true/></dict>
 </dict></plist>

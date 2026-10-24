@@ -3,6 +3,9 @@ import SwiftUI
 
 @MainActor
 final class RemotePanelState: ObservableObject {
+    @Published var manualAddress = CommandLine.arguments.contains("--preview-manual-address")
+    @Published var confirmForget = false
+    @Published var confirmPair = false
     @Published var navigationMode = 0
     @Published var changingVolume = false
     @Published var draftVolume = 0.0
@@ -14,6 +17,7 @@ struct RemoteView: View {
     @ObservedObject private var updates = UpdateChecker.shared
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @StateObject private var ui = RemotePanelState()
+    @AppStorage("settingsPane") private var settingsPane = 0
     @AppStorage("magicRemoteEnabled") private var magicRemoteEnabled = true
     @AppStorage("pointerSensitivity") private var pointerSensitivity = 4.0
 
@@ -27,7 +31,7 @@ struct RemoteView: View {
                     Button(L("Apri Release")) { updates.openRelease() }
                 }.font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
             }
-            if tv.settings { ScrollView { settings }.frame(height: 470) } else { controls }
+            if tv.settings { settings } else { controls }
             if let error = tv.error {
                 HStack(alignment: .top, spacing: 7) {
                     Image(systemName: "exclamationmark.circle.fill")
@@ -90,7 +94,7 @@ struct RemoteView: View {
                         }
                         Divider()
                         Button(L("Aggiorna sorgenti")) { Task { await tv.refresh() } }
-                    } label: { Text(L("Seleziona…")) }.frame(width: 155)
+                    } label: { Text(L("Seleziona…")) }.frame(width: 155, alignment: .trailing)
                 }
                 Divider()
                 navigation
@@ -191,18 +195,115 @@ struct RemoteView: View {
     }
     private var appVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—" }
     private var settings: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L("Collegamento")).font(.headline)
-            TextField(L("Indirizzo TV"), text: $tv.host).textFieldStyle(.roundedBorder)
-            Text(L("Nome locale o IPv4, senza http://")).font(.system(size: 11)).foregroundStyle(.secondary)
+        VStack(spacing: 12) {
+            Picker(L("Sezione impostazioni"), selection: $settingsPane) {
+                Text(L("TV")).tag(0)
+                Text(L("Accensione")).tag(1)
+                Text(L("App")).tag(2)
+            }.pickerStyle(.segmented).labelsHidden()
+            Group {
+                if settingsPane == 1 { wakeSettings }
+                else if settingsPane == 2 { appSettings }
+                else { connectionSettings }
+            }.frame(height: 350)
+            HStack {
+                Text(L("Telecomando LG"))
+                Spacer()
+                Text(LF("Versione %@", appVersion))
+            }.font(.system(size: 11)).foregroundStyle(.secondary)
+        }.font(.system(size: 12))
+    }
+    private var connectionSettings: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+            Text(L("Collega una TV")).font(.headline)
+            Text(L("Accendi la TV e collegala alla stessa rete del Mac."))
+                .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Button(tv.discoveringTVs ? L("Ricerca in corso…") : L("Cerca TV")) { tv.searchTVs() }
+                    .buttonStyle(.borderedProminent).disabled(tv.discoveringTVs || tv.preparingTV)
+                if tv.discoveringTVs {
+                    ProgressView().controlSize(.small)
+                    Button(L("Annulla")) { tv.cancelDiscovery(); tv.discoveryMessage = L("Ricerca annullata") }
+                }
+            }
+            if !tv.discoveryMessage.isEmpty {
+                Text(tv.discoveryMessage).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(tv.discoveredTVs) { found in
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(found.name).fontWeight(.medium).lineLimit(2)
+                        Text(found.host).font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button(L("Collega")) { tv.selectTV(found) }.disabled(tv.preparingTV)
+                }
+            }
+            Button {
+                ui.manualAddress.toggle()
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: ui.manualAddress ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text(L("Inserisci indirizzo manualmente"))
+                    Spacer(minLength: 0)
+                }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+            }.buttonStyle(.plain).disabled(tv.preparingTV)
+                .accessibilityValue(ui.manualAddress ? L("Espanso") : L("Compresso"))
+            if ui.manualAddress {
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField(L("Indirizzo TV"), text: $tv.host).textFieldStyle(.roundedBorder)
+                    Text(L("Nome locale o IPv4, senza http://")).font(.system(size: 11)).foregroundStyle(.secondary)
+                    Button(L("Salva e collega")) { tv.saveSettings() }.disabled(tv.host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }.padding(.top, 6).disabled(tv.preparingTV)
+            }
+            if !tv.host.isEmpty {
+                Divider()
+                Text(LF("TV salvata: %@", tv.host)).font(.system(size: 11)).foregroundStyle(.secondary)
+                if tv.connected {
+                    Button(L("Ripeti associazione")) { ui.confirmPair = true }.buttonStyle(.borderless)
+                        .alert(L("Ripeti associazione"), isPresented: $ui.confirmPair) {
+                            Button(L("Annulla"), role: .cancel) { }
+                            Button(L("Continua")) { tv.rePair() }
+                        } message: { Text(L("Conferma la richiesta sulla TV. Se il tentativo fallisce, il collegamento precedente resta salvato.")) }
+                }
+                Button(L("Rimuovi associazione"), role: .destructive) { ui.confirmForget = true }.buttonStyle(.borderless)
+                    .alert(L("Rimuovere l’associazione alla TV?"), isPresented: $ui.confirmForget) {
+                        Button(L("Annulla"), role: .cancel) { }
+                        Button(L("Rimuovi associazione"), role: .destructive) { tv.forgetTV() }
+                    } message: { Text(L("Verranno rimossi l’associazione dal Portachiavi, l’indirizzo della TV, il MAC e il broadcast salvati. Per collegarti di nuovo dovrai confermare sulla TV.")) }
+            }
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+        }.scrollIndicators(.visible)
+    }
+    private var wakeSettings: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
             Text(L("Accensione dalla rete")).font(.headline).padding(.top, 4)
             TextField(L("MAC della TV · AA:BB:CC:DD:EE:FF"), text: $tv.mac).textFieldStyle(.roundedBorder)
+            Button(tv.detectingMAC ? L("Ricerca MAC della TV…") : L("Rileva MAC dalla TV")) { tv.detectMAC() }
+                .disabled(tv.detectingMAC)
+            if !tv.macDetectionMessage.isEmpty {
+                Text(tv.macDetectionMessage).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(tv.macCandidates) { candidate in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(candidate.address).monospaced()
+                    Text(L(candidate.source == "wifi" ? "Wi-Fi · rilevato dalla TV" : candidate.source == "wired" ? "Ethernet · rilevato dalla TV" : candidate.source == "wifi-unverified" ? "Wi-Fi · verifica la connessione attiva" : candidate.source == "wired-unverified" ? "Ethernet · verifica la connessione attiva" : "Cache di rete · da verificare sulla TV")).font(.system(size: 11)).foregroundStyle(.secondary)
+                    Button(L("Usa questo MAC")) { tv.applyMAC(candidate) }
+                }
+            }
             TextField(L("Broadcast · 192.168.1.255"), text: $tv.broadcast).textFieldStyle(.roundedBorder)
             Text(L("Attiva l’accensione da dispositivo mobile sulla TV. Usa il MAC della connessione Wi-Fi o Ethernet, non l’identificativo AirPlay."))
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             Button(L("Salva e collega")) { tv.saveSettings() }.buttonStyle(.borderedProminent)
-            Button(L("Nuova associazione")) { tv.rePair() }.buttonStyle(.borderless)
-            Divider().padding(.vertical, 2)
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+        }.scrollIndicators(.visible)
+    }
+    private var appSettings: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
             Toggle(L("Puntatore Magic Remote"), isOn: $magicRemoteEnabled)
                 .onChange(of: magicRemoteEnabled) { enabled in tv.stopPointerMotion(); ui.navigationMode = enabled ? 0 : 1 }
             if magicRemoteEnabled {
@@ -223,11 +324,7 @@ struct RemoteView: View {
             if !updates.message.isEmpty {
                 Text(updates.message).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
-            HStack {
-                Text(L("Telecomando LG"))
-                Spacer()
-                Text(LF("Versione %@", appVersion))
-            }.font(.system(size: 11)).foregroundStyle(.secondary)
-        }.font(.system(size: 12))
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+        }.scrollIndicators(.visible)
     }
 }

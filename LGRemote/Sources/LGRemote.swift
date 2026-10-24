@@ -62,7 +62,10 @@ enum PairingStore {
         if SecItemUpdate(q as CFDictionary, attrs as CFDictionary) == errSecSuccess { return true }
         return SecItemAdd(q.merging(attrs) { _, b in b } as CFDictionary, nil) == errSecSuccess
     }
-    static func remove(_ host: String) { SecItemDelete(query(host) as CFDictionary) }
+    static func remove(_ host: String) -> Bool {
+        let result = SecItemDelete(query(host) as CFDictionary)
+        return result == errSecSuccess || result == errSecItemNotFound
+    }
 }
 
 enum WakeOnLAN {
@@ -107,7 +110,7 @@ enum WakeOnLAN {
 
 @MainActor
 final class TVRemote: NSObject, ObservableObject {
-    @Published var host = UserDefaults.standard.string(forKey: "host") ?? "LGwebOSTV.local"
+    @Published var host = UserDefaults.standard.string(forKey: "host") ?? ""
     @Published var mac = UserDefaults.standard.string(forKey: "mac") ?? ""
     @Published var broadcast = UserDefaults.standard.string(forKey: "broadcast") ?? "192.168.1.255"
     @Published var connected = false
@@ -121,6 +124,19 @@ final class TVRemote: NSObject, ObservableObject {
     @Published var channel = ""
     @Published var settings = false
     @Published var enteringChannel = ""
+    @Published var detectingMAC = false
+    @Published var macCandidates: [MACCandidate] = []
+    @Published var macDetectionMessage = ""
+    @Published var discoveringTVs = false
+    @Published var discoveredTVs: [DiscoveredTV] = []
+    @Published var discoveryMessage = ""
+    @Published var preparingTV = false
+    private var discoveryTask: Task<Void, Never>?
+    private var discoveryGeneration = UUID()
+    private var activeHost: String?
+    private var identityTask: Task<Void, Never>?
+    private var wakeTask: Task<Void, Never>?
+    private var wakeGeneration = UUID()
     private var session = URLSession(configuration: .default)
     private var socket: URLSessionWebSocketTask?
     private var buttonSocket: URLSessionWebSocketTask?
@@ -132,13 +148,19 @@ final class TVRemote: NSObject, ObservableObject {
     private var powerOffPending = false
     private var usingSavedKey = false
     private var activePairingKey: String?
+    private var activePairingAccount: String?
     private var inputEvents: [RemoteInputEvent] = []
     private var inputWorker: Task<Void, Never>?
     private static let permissionRevision = 2
     private var pending: [String: CheckedContinuation<[String: Any], Error>] = [:]
     private var requestTimers: [String: Task<Void, Never>] = [:]
 
-    func saveSettings() {
+    func saveSettings(allowRediscovery: Bool = true) {
+        let priorHost = UserDefaults.standard.string(forKey: "host") ?? ""
+        if !priorHost.isEmpty && priorHost != host.trimmingCharacters(in: .whitespacesAndNewlines) {
+            UserDefaults.standard.removeObject(forKey: "tvDeviceID")
+            UserDefaults.standard.removeObject(forKey: "pairingLegacyHost")
+        }
         host = host.trimmingCharacters(in: .whitespacesAndNewlines)
         mac = mac.trimmingCharacters(in: .whitespacesAndNewlines)
         broadcast = broadcast.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -147,10 +169,15 @@ final class TVRemote: NSObject, ObservableObject {
         UserDefaults.standard.set(broadcast, forKey: "broadcast")
         settings = false
         disconnect()
-        connect()
+        connect(allowRediscovery: allowRediscovery)
     }
     func disconnect() {
+        cancelDiscovery()
         generation = UUID()
+        activeHost = nil
+        identityTask?.cancel(); identityTask = nil; detectingMAC = false
+        macCandidates = []; macDetectionMessage = ""
+        wakeGeneration = UUID(); wakeTask?.cancel(); wakeTask = nil
         reader?.cancel(); deadline?.cancel(); poller?.cancel(); inputWorker?.cancel()
         inputWorker = nil; inputEvents.removeAll()
         socket?.cancel(with: .goingAway, reason: nil)
@@ -167,18 +194,28 @@ final class TVRemote: NSObject, ObservableObject {
         requestTimers.values.forEach { $0.cancel() }; requestTimers.removeAll()
         for callback in callbacks.values { callback.resume(throwing: RemoteError.message(L("Collegamento interrotto."))) }
     }
-    func connect() {
+    func connect(forcePairing: Bool = false, allowRediscovery: Bool = true) {
         guard !connected && !connecting else { return }
+        cancelDiscovery()
+        let savedIdentity = UserDefaults.standard.string(forKey: "host") == host ? UserDefaults.standard.string(forKey: "tvDeviceID") : nil
+        let account = savedIdentity.map { "device:" + $0 } ?? host
         // The plain WebSocket transport was verified on this specific LG by the user.
         guard !host.isEmpty, !host.contains("/"), !host.contains(":"), !host.contains(" "),
               let url = URL(string: "ws://\(host):3000") else {
             error = L("Inserisci un nome di rete o un indirizzo IPv4 valido, senza http://."); return
         }
         let savedKey: String?
-        do { savedKey = try PairingStore.read(host) }
+        do {
+            if forcePairing { savedKey = nil }
+            else if let stable = try PairingStore.read(account) { savedKey = stable }
+            else if let legacy = UserDefaults.standard.string(forKey: "pairingLegacyHost"), savedIdentity != nil {
+                savedKey = try PairingStore.read(legacy)
+            } else { savedKey = try PairingStore.read(host) }
+        }
         catch { self.error = error.localizedDescription; return }
         usingSavedKey = savedKey != nil
         activePairingKey = savedKey
+        activePairingAccount = account
         let updatePermissions = savedKey != nil && UserDefaults.standard.integer(forKey: "permissionRevision.\(host)") < Self.permissionRevision
         error = nil; connecting = true; status = L("Connessione a LG 55…")
         let connectionHost = host
@@ -189,7 +226,7 @@ final class TVRemote: NSObject, ObservableObject {
             do {
                 var payload: [String: Any] = [
                     "pairingType": "PROMPT",
-                    "forcePairing": updatePermissions,
+                    "forcePairing": forcePairing || updatePermissions,
                     "manifest": ["manifestVersion": 1, "appVersion": "1.0",
                         "permissions": ["CONTROL_AUDIO", "CONTROL_POWER", "CONTROL_INPUT_TV",
                             "CONTROL_INPUT_JOYSTICK", "CONTROL_INPUT_MEDIA_PLAYBACK", "LAUNCH",
@@ -211,10 +248,13 @@ final class TVRemote: NSObject, ObservableObject {
             } catch {
                 guard token == generation, !Task.isCancelled else { return }
                 let shuttingDown = powerOffPending
+                let wasConnected = connected
                 disconnect()
                 if shuttingDown {
                     status = L("TV disconnessa dopo richiesta spegnimento")
                     self.error = nil
+                } else if !wasConnected, allowRediscovery, !forcePairing, let savedIdentity {
+                    rediscoverSavedTV(identity: savedIdentity)
                 } else {
                     self.error = L("TV non raggiungibile. Controlla che sia accesa e sulla stessa rete, poi premi Collega.")
                 }
@@ -231,14 +271,15 @@ final class TVRemote: NSObject, ObservableObject {
         let payload = body["payload"] as? [String: Any] ?? [:]
         let id = body["id"] as? String ?? ""
         if type == "registered" {
-            deadline?.cancel(); connecting = false; connected = true; status = L("Collegata")
-            if let key = payload["client-key"] as? String, key != activePairingKey, !PairingStore.save(key, host: connectionHost) {
+            deadline?.cancel(); connecting = false; connected = true; activeHost = connectionHost; status = L("Collegata")
+            if let key = payload["client-key"] as? String ?? activePairingKey, !PairingStore.save(key, host: activePairingAccount ?? connectionHost) {
                 error = L("Collegata, ma non è stato possibile salvare l’associazione nel Portachiavi.")
             } else if payload["client-key"] is String || usingSavedKey {
                 UserDefaults.standard.set(connectionHost, forKey: "pairedHost")
                 UserDefaults.standard.set(Self.permissionRevision, forKey: "permissionRevision.\(connectionHost)")
             }
-            Task { await refresh(); await learnMAC() }
+            Task { await refresh() }
+            if mac.isEmpty { detectMAC(automatic: true) }
             poller = Task {
                 while !Task.isCancelled {
                     try? await Task.sleep(nanoseconds: 8_000_000_000)
@@ -390,23 +431,157 @@ final class TVRemote: NSObject, ObservableObject {
         do {
             try WakeOnLAN.send(mac: mac, broadcast: broadcast)
             error = nil; status = L("Accensione richiesta…")
-            Task {
+            wakeTask?.cancel(); let wakeToken = UUID(); wakeGeneration = wakeToken
+            let target = host
+            wakeTask = Task {
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
-                guard !Task.isCancelled, !connected, !connecting else { return }
+                guard !Task.isCancelled, wakeToken == wakeGeneration, target == host, !connected, !connecting else { return }
                 connect()
             }
         } catch { self.error = error.localizedDescription; settings = true }
     }
-    func learnMAC() async {
-        guard mac.isEmpty,
-              let result = try? await request("com.webos.service.connectionmanager/getinfo") else { return }
-        for key in ["wired", "wifi"] {
-            guard let info = result[key] as? [String: Any], info["state"] as? String == "connected",
-                  let address = (info["macAddress"] as? String ?? info["mac"] as? String), WakeOnLAN.bytes(address) != nil else { continue }
-            mac = address; UserDefaults.standard.set(address, forKey: "mac"); return
+    func detectMAC(automatic: Bool = false) {
+        guard connected, activeHost == host else {
+            macDetectionMessage = L("Accendi la TV e collegala prima di rilevare il MAC. Il valore salvato resta disponibile per l’accensione.")
+            return
+        }
+        guard !detectingMAC else { return }
+        detectingMAC = true; macCandidates = []; macDetectionMessage = L("Ricerca MAC della TV…")
+        let token = generation, target = host, initialMAC = mac
+        identityTask = Task {
+            defer { if token == generation { detectingMAC = false; identityTask = nil } }
+            let result = try? await request("com.webos.service.connectionmanager/getinfo")
+            guard !Task.isCancelled, token == generation, target == host, connected else { return }
+            let networkStatus = try? await request("com.webos.service.connectionmanager/getStatus")
+            guard !Task.isCancelled, token == generation, target == host, connected else { return }
+            var candidates = result.map { TVNetworkIdentity.fromAPI($0, status: networkStatus) } ?? []
+            if candidates.isEmpty, let fallback = await TVNetworkIdentity.fromARP(host: target) {
+                candidates = [fallback]
+            }
+            guard !Task.isCancelled, token == generation, target == host, connected else { return }
+            detectingMAC = false
+            macCandidates = candidates
+            if candidates.isEmpty {
+                macDetectionMessage = L("MAC non rilevato. Controlla il MAC Wi-Fi o Ethernet nelle impostazioni della TV e inseriscilo manualmente.")
+            } else if automatic && candidates.count == 1 && mac.isEmpty && initialMAC.isEmpty && ["wifi", "wired"].contains(candidates[0].source) {
+                applyMAC(candidates[0])
+            } else {
+                macDetectionMessage = L("Verifica la scheda e premi Usa questo MAC. La ricerca non modifica il valore salvato.")
+            }
+            identityTask = nil
         }
     }
-    func rePair() { PairingStore.remove(host); disconnect(); settings = false; connect() }
+    func applyMAC(_ candidate: MACCandidate) {
+        guard connected, activeHost == host, macCandidates.contains(candidate) else { return }
+        mac = candidate.address
+        UserDefaults.standard.set(mac, forKey: "mac")
+        macDetectionMessage = L("MAC salvato per l’accensione. Verificalo con quello indicato dalla TV.")
+        macCandidates = []
+    }
+    func searchTVs() {
+        cancelDiscovery()
+        let token = discoveryGeneration
+        discoveringTVs = true; discoveredTVs = []
+        discoveryMessage = L("Ricerca TV sulla rete locale…")
+        discoveryTask = Task {
+            do {
+                let found = try await TVDiscovery.search()
+                guard !Task.isCancelled, token == discoveryGeneration else { return }
+                discoveredTVs = found
+                discoveryMessage = found.isEmpty
+                    ? L("Nessuna TV trovata. Accendila, verifica la stessa rete e consenti l’accesso alla rete locale per l’app nelle Impostazioni di Sistema. Poi riprova.")
+                    : L("Scegli la TV e conferma la richiesta sul televisore.")
+            } catch {
+                guard !Task.isCancelled, token == discoveryGeneration else { return }
+                discoveryMessage = L("Ricerca non riuscita. Verifica la rete e il permesso Rete locale dell’app, poi riprova.")
+            }
+            guard token == discoveryGeneration else { return }
+            discoveringTVs = false; discoveryTask = nil
+        }
+    }
+    func cancelDiscovery() {
+        discoveryGeneration = UUID()
+        discoveryTask?.cancel(); discoveryTask = nil
+        discoveringTVs = false; preparingTV = false
+    }
+    func selectTV(_ selected: DiscoveredTV) {
+        guard discoveredTVs.contains(selected), !preparingTV else { return }
+        prepareTV(selected, allowRediscovery: true)
+    }
+    private func prepareTV(_ selected: DiscoveredTV, allowRediscovery: Bool) {
+        disconnect()
+        let token = discoveryGeneration
+        preparingTV = true; discoveryMessage = L("Preparazione collegamento…")
+        let previous = UserDefaults.standard.string(forKey: "host") ?? host
+        let previousID = UserDefaults.standard.string(forKey: "tvDeviceID")
+        let sameTV = previous == selected.host || (previousID != nil && previousID == selected.deviceID)
+        discoveryTask = Task {
+            let detectedBroadcast = await TVNetworkIdentity.broadcast(for: selected.host)
+            guard !Task.isCancelled, token == discoveryGeneration else { return }
+            if !sameTV { mac = ""; broadcast = "" }
+            if let detectedBroadcast { broadcast = detectedBroadcast }
+            else if previous != selected.host { broadcast = "" }
+            if let identity = selected.deviceID {
+                UserDefaults.standard.set(identity, forKey: "tvDeviceID")
+                if sameTV && previousID == nil && !previous.isEmpty {
+                    UserDefaults.standard.set(previous, forKey: "pairingLegacyHost")
+                } else if !sameTV { UserDefaults.standard.removeObject(forKey: "pairingLegacyHost") }
+            } else {
+                UserDefaults.standard.removeObject(forKey: "tvDeviceID")
+                UserDefaults.standard.removeObject(forKey: "pairingLegacyHost")
+            }
+            host = selected.host
+            // Mark the host/identity change together so manual-address handling won't discard the identity.
+            UserDefaults.standard.set(host, forKey: "host")
+            discoveredTVs = []; discoveryMessage = ""
+            preparingTV = false
+            saveSettings(allowRediscovery: allowRediscovery)
+        }
+    }
+    private func rediscoverSavedTV(identity: String) {
+        cancelDiscovery()
+        let token = discoveryGeneration
+        discoveringTVs = true; status = L("Cerco la TV salvata…"); error = nil
+        discoveryTask = Task {
+            let results = (try? await TVDiscovery.search()) ?? []
+            guard !Task.isCancelled, token == discoveryGeneration else { return }
+            let matches = results.filter { $0.deviceID == identity }
+            discoveringTVs = false
+            if matches.count == 1 {
+                prepareTV(matches[0], allowRediscovery: false)
+            } else {
+                status = L("TV non raggiungibile")
+                error = L("TV salvata non trovata. Accendila e usa Cerca TV nelle impostazioni.")
+                discoveryTask = nil
+            }
+        }
+    }
+    func rePair() {
+        guard connected, activeHost == host else {
+            error = L("Per una nuova associazione accendi la TV e premi Collega. L’associazione salvata non è stata rimossa.")
+            return
+        }
+        disconnect(); settings = false; connect(forcePairing: true)
+    }
+    func forgetTV() {
+        let savedHost = UserDefaults.standard.string(forKey: "host") ?? host
+        var accounts = Set([savedHost])
+        if let identity = UserDefaults.standard.string(forKey: "tvDeviceID") { accounts.insert("device:" + identity) }
+        if let legacy = UserDefaults.standard.string(forKey: "pairingLegacyHost") { accounts.insert(legacy) }
+        let removed = accounts.map { PairingStore.remove($0) }
+        guard removed.allSatisfy({ $0 }) else {
+            error = L("Impossibile rimuovere l’associazione dal Portachiavi. Consenti l’accesso all’app e riprova.")
+            return
+        }
+        disconnect()
+        for key in ["mac", "broadcast", "pairedHost", "tvDeviceID", "pairingLegacyHost", "permissionRevision.\(savedHost)"] { UserDefaults.standard.removeObject(forKey: key) }
+        UserDefaults.standard.set("", forKey: "host")
+        host = ""; mac = ""; broadcast = ""
+        discoveredTVs = []; discoveryMessage = ""
+        UserDefaults.standard.set(0, forKey: "settingsPane")
+        error = nil; settings = true; status = L("Collegamento rimosso")
+    }
+
 }
 
 @main
@@ -416,7 +591,19 @@ if let path = Bundle.main.object(forInfoDictionaryKey: "LGRemoteExportPath") as?
     PreviewExport.run(to: path)
 } else if let index = CommandLine.arguments.firstIndex(of: "--export-preview"), CommandLine.arguments.count > index + 1 {
     PreviewExport.run(to: CommandLine.arguments[index + 1])
+} else if CommandLine.arguments.contains("--discover-tvs") {
+    Task {
+        do { let found = try await TVDiscovery.search(); print("Discovery completed: \(found.count) webOS TV(s)"); exit(0) }
+        catch { print("Discovery failed: \(error)"); exit(1) }
+    }
+    NSApplication.shared.run()
 } else if CommandLine.arguments.contains("--self-test") {
+    let offline = TVRemote()
+    offline.host = "example.invalid"; offline.mac = "02:00:00:00:00:01"
+    offline.rePair()
+    precondition(offline.mac == "02:00:00:00:00:01" && offline.error != nil && !offline.connecting)
+    offline.detectMAC()
+    precondition(!offline.macDetectionMessage.isEmpty && !offline.detectingMAC && offline.macCandidates.isEmpty)
     let packet = try WakeOnLAN.packet("02:00:00:00:00:01")
     precondition(packet.count == 102)
     precondition(Array(packet.prefix(6)) == Array(repeating: 255, count: 6))

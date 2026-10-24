@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.0.1 — Setup improvements / Migliorie alla configurazione (24 October 2026, build 19)
+
+### Italiano
+
+- Ricerca TV via SSDP: l’utente vede le TV trovate e sceglie quale collegare, dopo aver approvato la richiesta sul televisore.
+- Inserimento manuale dell’indirizzo sempre disponibile, con disclosure a tutta riga.
+- Identità stabile USN per seguire la TV quando cambia indirizzo DHCP; dopo un primo collegamento con **Cerca TV**, il primo errore di connessione può tentare una sola riscoperta.
+- Lettura di `wifiInfo`/`wiredInfo` da `getinfo`: gli stati sconosciuti restano candidati da verificare manualmente; il salvataggio automatico avviene solo con un unico candidato attivo confermato e campo MAC vuoto.
+- Fallback ARP locale con conferma manuale.
+- Calcolo automatico del broadcast della sottorete quando si sceglie una TV trovata.
+- Impostazioni organizzate in tre schede: TV, Accensione e App.
+- Una nuova associazione conserva la pairing key precedente finché la TV non accetta la registrazione; Rimuovi collegamento richiede conferma e rimuove associazione e identità salvate.
+- Nessun servizio in background o di login e nessuna scansione TV periodica. Il controllo aggiornamenti GitHub resta facoltativo, con intervallo di 24 ore mentre l’app è aperta.
+
+### English
+
+- SSDP TV discovery: the user reviews found TVs and chooses which one to connect after approving the request on the TV.
+- Manual address entry remains available through a full-row disclosure.
+- Stable USN identity follows a TV across DHCP address changes; after one initial **Find TVs** connection, the first connection failure may attempt one rediscovery.
+- `getinfo` reads `wifiInfo`/`wiredInfo`: unknown states remain candidates for manual verification; automatic saving occurs only for one confirmed active candidate when the MAC field is empty.
+- Local ARP fallback requires manual confirmation.
+- The subnet broadcast address is filled automatically when selecting a discovered TV.
+- Settings are organized into three tabs: TV, Power On and App.
+- Re-pairing preserves the previous pairing key until the TV accepts registration; Remove Connection is confirmed and clears saved pairing and identity.
+- No background or login service and no periodic TV scans. The GitHub update check remains opt-in, with a 24-hour interval while the app is running.
+
+This is a setup improvement release. It does not claim an overnight Wake-on-LAN fix or universal TV compatibility.
+
 ## 1.0 — Initial launch / Lancio iniziale
 
 - Default-off opt-in check for new GitHub Releases at startup and every 24 hours while the app is running.
