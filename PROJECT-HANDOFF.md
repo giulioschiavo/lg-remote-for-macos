@@ -1,14 +1,14 @@
 # Passaggio progetto LG Remote per macOS
 
-Aggiornato: 24 ottobre 2026. Release preparata: **1.0.1, build 19**, Apple Silicon arm64, macOS 13+.
+Aggiornato: 24 ottobre 2026. Release pubblicata: **1.0.1, build 19**, Apple Silicon arm64, macOS 13+.
 
 ## Distribuzione
 
 Repository: https://github.com/giulioschiavo/lg-remote-for-macos
-Release prevista: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.1
+Release verificata: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.1
 Pacchetto: `Downloads/LG-Remote-1.0.1-macOS-arm64.zip`.
 SHA-256: `689a051b67e033b25be57fc5565deaaee7fa873bccef8b0fdaca4671bc39cd66`.
-La pubblicazione va verificata separatamente dalla preparazione locale.
+Pubblicazione e API Latest verificate. Download pubblico integro e identico al pacchetto locale. Sorgenti al commit `b32171f88ff7094c943e75411b3d255ae2d22045`.
 
 ## Decisioni
 
