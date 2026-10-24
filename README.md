@@ -16,6 +16,14 @@ I built this app for my own convenience: I wanted to adjust the volume, change c
 
 English interface with sample data.
 
+### Settings
+
+The three settings tabs, shown with sample data.
+
+| TV | Power On | App |
+| --- | --- | --- |
+| <img src="docs/images/lg-settings-tv-en.png" alt="TV" width="240"> | <img src="docs/images/lg-settings-power-en.png" alt="Power On" width="240"> | <img src="docs/images/lg-settings-app-en.png" alt="App" width="240"> |
+
 ### App icons
 
 | Light | Dark |

@@ -16,6 +16,14 @@ L’ho creata per mia comodità: volevo regolare il volume, cambiare canale o so
 
 Interfaccia italiana con dati dimostrativi.
 
+### Impostazioni
+
+Le tre schede delle impostazioni, con dati dimostrativi.
+
+| TV | Accensione | App |
+| --- | --- | --- |
+| <img src="docs/images/lg-settings-tv-it.png" alt="TV" width="240"> | <img src="docs/images/lg-settings-power-it.png" alt="Accensione" width="240"> | <img src="docs/images/lg-settings-app-it.png" alt="App" width="240"> |
+
 ### Icone dell’app
 
 | Chiara | Scura |
