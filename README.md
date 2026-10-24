@@ -66,6 +66,16 @@ Pairing is saved in Keychain, so you normally only approve once. A TV reset, per
 
 Click the menu bar icon to open or hide the panel. Escape and clicking outside also hide it.
 
+### Tip: keep the TV’s IP address stable
+
+For a more consistent connection between the app and TV, we recommend giving the TV the same IP address on your local network. Prefer a **DHCP reservation on your router**, also called *reserved IP*, *IP/MAC binding* or *Address Reservation*: the router assigns the same address to the MAC of the TV’s active Wi-Fi or Ethernet adapter, while the TV can keep its automatic network configuration.
+
+Find the TV in the router’s device list and reserve an address in your subnet, following the router manufacturer’s instructions. Wi-Fi and Ethernet have different MAC addresses; update the reservation if you change connection type. This [official TP-Link example](https://www.tp-link.com/us/support/faq/182/) illustrates the principle; menu names and paths vary by router.
+
+Alternatively, configure a static IP on the TV with the correct address, subnet mask, gateway and DNS, using an address excluded from the DHCP pool or reserved on the router to avoid conflicts. A DHCP reservation is usually easier to manage.
+
+A stable IP prevents address changes; it does not make TV authorization permanent or guarantee wake from standby. Approved pairing and the correct Wake-on-LAN MAC are still required.
+
 ## Touchpad
 
 Move the Mac cursor inside the touchpad to move the TV pointer relatively. Click to select, scroll with two fingers or a mouse wheel, and right-click to go back. Movement stops outside the touchpad; reenter to continue from the TV pointer’s current position.
