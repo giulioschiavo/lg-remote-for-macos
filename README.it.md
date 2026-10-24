@@ -66,6 +66,16 @@ L’associazione viene salvata nel Portachiavi: normalmente basta una sola confe
 
 Un clic sull’icona nella barra apre o nasconde il pannello. Anche Escape e un clic esterno lo nascondono.
 
+### Consiglio: mantieni stabile l’indirizzo IP della TV
+
+Per rendere più stabile il collegamento tra app e TV, consigliamo di assegnare al televisore sempre lo stesso IP sulla rete locale. Il metodo preferibile è una **prenotazione DHCP sul router**, spesso chiamata *IP riservato*, *associazione IP/MAC* o *Address Reservation*: il router assegna sempre lo stesso indirizzo al MAC della scheda Wi-Fi o Ethernet utilizzata dalla TV, mentre sul televisore puoi lasciare la configurazione automatica.
+
+Cerca la TV nell’elenco dei dispositivi del router e riservale un indirizzo nella tua sottorete, seguendo le istruzioni del produttore. Wi-Fi ed Ethernet hanno MAC diversi: se cambi tipo di collegamento, aggiorna la prenotazione. Un [esempio ufficiale TP-Link](https://www.tp-link.com/us/support/faq/182/) illustra il principio; nomi e percorsi variano secondo il router.
+
+In alternativa puoi configurare un IP statico direttamente sulla TV, usando indirizzo, maschera, gateway e DNS corretti e un indirizzo escluso dal pool DHCP o riservato sul router, per evitare conflitti. La prenotazione DHCP è in genere più semplice da gestire.
+
+Un IP stabile evita cambi d’indirizzo; non rende permanente l’autorizzazione della TV e non garantisce l’accensione dallo standby. Restano necessari l’associazione approvata e il corretto MAC per Wake-on-LAN.
+
 ## Touchpad
 
 Muovi il cursore del Mac all’interno per spostare in modo relativo il puntatore della TV. Clic per selezionare, due dita o rotella per scorrere, clic destro per tornare indietro. Fuori dall’area il movimento si interrompe; al rientro continua dalla posizione attuale sulla TV.
