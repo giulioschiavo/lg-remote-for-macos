@@ -193,3 +193,9 @@
 "Sulla TV abilita l’accensione tramite Wi-Fi nelle impostazioni per dispositivi mobili." = "Enable Wi-Fi power-on in the TV settings for mobile devices.";
 
 "Controlli" = "Controls";
+
+"Autorizzazione non completata. Riprova dalle impostazioni con la TV accesa." = "Authorization was not completed. Try again in Settings with the TV on.";
+
+"Se la TV è in standby, premi Accendi." = "If the TV is in standby, choose Turn On.";
+
+"Collegamento non riuscito. Riprova dalle impostazioni con la TV accesa." = "Connection failed. Try again in Settings with the TV on.";

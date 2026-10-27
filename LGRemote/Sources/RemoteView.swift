@@ -72,7 +72,7 @@ struct RemoteView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
                 Button { tv.wake() } label: { Label(L("Accendi"), systemImage: "power").frame(maxWidth: .infinity) }
-                    .disabled(tv.connected || tv.connecting)
+                    .disabled(tv.connected)
                 Button { tv.powerOff() } label: { Label(L("Spegni"), systemImage: "power").frame(maxWidth: .infinity) }
                     .disabled(!tv.connected)
             }.controlSize(.large)
@@ -101,7 +101,7 @@ struct RemoteView: View {
     private var connection: some View {
         HStack(spacing: 10) {
             if tv.connecting { ProgressView().controlSize(.small) }
-            Text(tv.connecting ? L("Attendi il collegamento. Se richiesto, conferma sulla TV.") : L("TV e Mac devono essere sulla stessa rete."))
+            Text(tv.connecting ? L("Attendi il collegamento. Se richiesto, conferma sulla TV.") : L("Se la TV è in standby, premi Accendi."))
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }.padding(.vertical, 3)
     }

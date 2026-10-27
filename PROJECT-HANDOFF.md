@@ -1,13 +1,13 @@
 # Passaggio progetto LG Remote per macOS
 
-Aggiornato: 27 ottobre 2026. Versione **1.0.2, build 24**, Apple Silicon arm64, macOS 13+.
+Aggiornato: 27 ottobre 2026. Versione **1.0.3, build 25**, Apple Silicon arm64, macOS 13+.
 
 ## Distribuzione
 
 Repository: https://github.com/giulioschiavo/lg-remote-for-macos
-Release: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.2
-Pacchetto: `Downloads/LG-Remote-1.0.2-macOS-arm64.zip`.
-SHA-256: `ba92f75896a917096e432ad87dcc9493e694317b0e695ca4bfe1286289fbee28`.
+Release: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.3
+Pacchetto: `Downloads/LG-Remote-1.0.3-macOS-arm64.zip`.
+SHA-256: `8132edfc13b13685285be48f378cb3725fb725eb1230e0830842bf852109ea84`.
 Firma ad-hoc; nessun Developer ID o notarizzazione. Release pubblicata come Latest; API, download pubblico, SHA256 e binario installato verificati il 27 ottobre 2026.
 
 ## Decisioni da conservare
@@ -29,3 +29,9 @@ Build, firma, integrità ZIP e self-test IT/EN superati. Test di fallback TLS, r
 Da verificare: risveglio dopo standby notturno, recupero dopo cambio DHCP reale, altri modelli e consegna di una notifica per una release futura. Quick Start+ da solo non ha risolto il caso notturno. Prenotazione DHCP consigliata, senza garanzia di risveglio o autorizzazione permanente.
 
 Prima delle modifiche verificare file e stato remoto. La versione1.0.1 rimane recuperabile dalla sua release.
+
+## Versione 1.0.3 build25 — 27 ottobre 2026
+
+TV inizialmente irraggiungibile su3001; cinque pacchetti WoL da terminale l’hanno resa raggiungibile. Ricollegamento WSS e spegnimento dall’app confermati. Correzione: Accendi resta disponibile durante connessione; interrompe tentativo/discovery prima del burst. Timeout trasporto5s separato da autorizzazione/certificato60s; eventuale unica ricerca identità8s resta limitata. Nessun falso errore di autorizzazione per TV spenta. Pubblicazione1.0.2 conservata; questa prova non pubblicata.
+
+- Note pubbliche1.0.3 richieste dall’utente: Small bugfix. Non sostituire1.0.2. TV spenta dopo la prova, lasciare in standby.

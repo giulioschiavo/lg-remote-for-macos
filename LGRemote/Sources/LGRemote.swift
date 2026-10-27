@@ -235,7 +235,12 @@ final class TVRemote: NSObject, ObservableObject {
         let connectionHost = host
         generation = UUID(); let token = generation
         session.invalidateAndCancel()
-        session = URLSession(configuration: .default, delegate: TVTLSDelegate(host: host, account: account), delegateQueue: nil)
+        session = URLSession(configuration: .default, delegate: TVTLSDelegate(host: host, account: account, onTrustPrompt: { [weak self] in
+            Task { @MainActor in
+                guard let self, token == self.generation else { return }
+                self.setConnectionDeadline(token: token, awaitingApproval: true)
+            }
+        }), delegateQueue: nil)
         secureTransport = useSecure
         let ws = session.webSocketTask(with: url)
         socket = ws; ws.resume()
@@ -253,6 +258,7 @@ final class TVRemote: NSObject, ObservableObject {
                 if let key = savedKey { payload["client-key"] = key }
                 try await send(["id": "pair", "type": "register", "payload": payload], over: ws)
                 guard token == generation else { return }
+                setConnectionDeadline(token: token, awaitingApproval: true)
                 status = savedKey == nil || updatePermissions ? L("Accetta il collegamento sulla TV") : L("Ripristino associazione salvata…")
                 while !Task.isCancelled {
                     let message = try await ws.receive()
@@ -264,6 +270,8 @@ final class TVRemote: NSObject, ObservableObject {
                 }
             } catch {
                 guard token == generation, !Task.isCancelled else { return }
+                let networkError = error as NSError
+                let unavailable = networkError.domain == NSURLErrorDomain && [NSURLErrorCannotConnectToHost, NSURLErrorTimedOut, NSURLErrorNotConnectedToInternet, NSURLErrorNetworkConnectionLost, NSURLErrorCannotFindHost, NSURLErrorDNSLookupFailed].contains(networkError.code)
                 let shuttingDown = powerOffPending
                 let wasConnected = connected
                 disconnect()
@@ -276,14 +284,26 @@ final class TVRemote: NSObject, ObservableObject {
                     rediscoverSavedTV(identity: savedIdentity)
                 } else {
                     status = L("TV non raggiungibile")
-                    self.error = L("TV non raggiungibile. Controlla che sia accesa e sulla stessa rete, poi premi Collega.")
+                    self.error = unavailable ? nil : L("Collegamento non riuscito. Riprova dalle impostazioni con la TV accesa.")
                 }
             }
         }
+        setConnectionDeadline(token: token, awaitingApproval: false, savedIdentity: allowRediscovery && !forcePairing ? savedIdentity : nil)
+    }
+    private func setConnectionDeadline(token: UUID, awaitingApproval: Bool, savedIdentity: String? = nil) {
+        deadline?.cancel()
         deadline = Task {
-            try? await Task.sleep(nanoseconds: 60_000_000_000)
+            try? await Task.sleep(nanoseconds: awaitingApproval ? 60_000_000_000 : 5_000_000_000)
             guard !Task.isCancelled, token == generation, !connected else { return }
-            disconnect(); error = L("Autorizzazione non completata. Premi Collega e accetta sulla TV.")
+            disconnect()
+            if awaitingApproval {
+                error = L("Autorizzazione non completata. Riprova dalle impostazioni con la TV accesa.")
+            } else if let savedIdentity {
+                rediscoverSavedTV(identity: savedIdentity)
+            } else {
+                status = L("TV non raggiungibile")
+                error = nil
+            }
         }
     }
     static func isStandby(_ state: String) -> Bool {
@@ -493,6 +513,7 @@ final class TVRemote: NSObject, ObservableObject {
         }
     }
     func wake() {
+        if connecting || discoveringTVs || preparingTV { disconnect() }
         wakeTask?.cancel(); let wakeToken = UUID(); wakeGeneration = wakeToken
         let target = host, wakeMAC = mac, wakeBroadcast = broadcast
         error = nil; status = L("Accensione richiesta…")
@@ -621,7 +642,7 @@ final class TVRemote: NSObject, ObservableObject {
                 prepareTV(matches[0], allowRediscovery: false)
             } else {
                 status = L("TV non raggiungibile")
-                error = L("TV salvata non trovata. Accendila e usa Cerca TV nelle impostazioni.")
+                error = nil
                 discoveryTask = nil
             }
         }

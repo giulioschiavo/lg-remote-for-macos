@@ -59,7 +59,7 @@ Sono fuori dall’ambito supportato le TV LG NetCast, le TV senza webOS e i deco
 
 ## Installazione
 
-Scarica [Telecomando LG 1.0.2 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.2/LG-Remote-1.0.2-macOS-arm64.zip) dalla [Release v1.0.2](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.2), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
+Scarica [Telecomando LG 1.0.3 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.3/LG-Remote-1.0.3-macOS-arm64.zip) dalla [Release v1.0.3](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.3), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
 
 Le compilazioni locali attuali hanno firma ad-hoc: **non sono firmate con Developer ID né notarizzate**. macOS può mostrare un avviso sullo sviluppatore non verificato. Se preferisci esaminare e compilare il codice, usa i sorgenti. Firma Developer ID e notarizzazione sono previste per semplificare la distribuzione.
 

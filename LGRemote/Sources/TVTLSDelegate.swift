@@ -6,7 +6,10 @@ import CryptoKit
 final class TVTLSDelegate: NSObject, URLSessionDelegate {
     private let host: String
     private let account: String
-    init(host: String, account: String) { self.host = host; self.account = "tls:" + account }
+    private let onTrustPrompt: () -> Void
+    init(host: String, account: String, onTrustPrompt: @escaping () -> Void = {}) {
+        self.host = host; self.account = "tls:" + account; self.onTrustPrompt = onTrustPrompt
+    }
 
     static func permitsLegacyFallback(_ error: Error, account: String) -> Bool {
         do { guard try PairingStore.read("tls:" + account) == nil else { return false } }
@@ -33,6 +36,7 @@ final class TVTLSDelegate: NSObject, URLSessionDelegate {
         }
         let bytes = SecCertificateCopyData(certificate) as Data
         let fingerprint = SHA256.hash(data: bytes).map { String(format: "%02X", $0) }.joined(separator: ":")
+        onTrustPrompt()
         Task { @MainActor in
             do {
                 if let saved = try PairingStore.read(account) {
