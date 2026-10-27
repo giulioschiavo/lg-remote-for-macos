@@ -8,7 +8,7 @@ Repository: https://github.com/giulioschiavo/lg-remote-for-macos
 Release: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.2
 Pacchetto: `Downloads/LG-Remote-1.0.2-macOS-arm64.zip`.
 SHA-256: `ba92f75896a917096e432ad87dcc9493e694317b0e695ca4bfe1286289fbee28`.
-Firma ad-hoc; nessun Developer ID o notarizzazione. Verificare lo stato pubblico della release separatamente dai file locali.
+Firma ad-hoc; nessun Developer ID o notarizzazione. Release pubblicata come Latest; API, download pubblico, SHA256 e binario installato verificati il 27 ottobre 2026.
 
 ## Decisioni da conservare
 
