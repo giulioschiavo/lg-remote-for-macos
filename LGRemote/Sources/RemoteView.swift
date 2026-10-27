@@ -4,6 +4,8 @@ import SwiftUI
 @MainActor
 final class RemotePanelState: ObservableObject {
     @Published var manualAddress = CommandLine.arguments.contains("--preview-manual-address")
+    @Published var broadcastDetails = false
+    @Published var otherTV = false
     @Published var confirmForget = false
     @Published var confirmPair = false
     @Published var navigationMode = 0
@@ -42,11 +44,6 @@ struct RemoteView: View {
             }
             Divider()
             HStack {
-                Button {
-                    let cancel = tv.connecting
-                    tv.disconnect(); if !cancel { tv.connect() }
-                } label: { Label(tv.connecting ? L("Annulla") : L("Ricollega"), systemImage: tv.connecting ? "xmark" : "arrow.clockwise") }
-                .buttonStyle(.borderless)
                 Spacer()
                 Button(L("Esci")) { NSApp.terminate(nil) }.buttonStyle(.borderless).keyboardShortcut("q")
             }.font(.system(size: 11)).foregroundStyle(.secondary)
@@ -106,7 +103,6 @@ struct RemoteView: View {
             if tv.connecting { ProgressView().controlSize(.small) }
             Text(tv.connecting ? L("Attendi il collegamento. Se richiesto, conferma sulla TV.") : L("TV e Mac devono essere sulla stessa rete."))
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if !tv.connecting { Button(L("Collega")) { tv.connect() }.buttonStyle(.borderedProminent) }
         }.padding(.vertical, 3)
     }
     private var volume: some View {
@@ -213,10 +209,68 @@ struct RemoteView: View {
             }.font(.system(size: 11)).foregroundStyle(.secondary)
         }.font(.system(size: 12))
     }
+    private var savedTVSettings: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "tv").font(.system(size: 22)).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(L("TV associata")).font(.headline)
+                    Text(tv.host).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                    Text(tv.connected ? L("Collegamento attivo") : L("Associazione salvata"))
+                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+            if !tv.connected {
+                Text(L("Per accendere la TV usa Accendi nel telecomando. Ricollega serve quando la TV è già accesa."))
+                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Button(tv.connecting ? L("Annulla") : L("Ricollega")) {
+                    let cancel = tv.connecting
+                    tv.disconnect(); if !cancel { tv.connect() }
+                }.buttonStyle(.borderedProminent)
+            }
+            Divider()
+            Text(L("Gestisci associazione")).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+            HStack(spacing: 10) {
+                Button(L("Ripeti associazione")) { ui.confirmPair = true }
+                    .disabled(!tv.connected)
+                    .alert(L("Ripeti associazione"), isPresented: $ui.confirmPair) {
+                        Button(L("Annulla"), role: .cancel) { }
+                        Button(L("Continua")) { tv.rePair() }
+                    } message: { Text(L("Conferma la richiesta sulla TV. Se il tentativo fallisce, il collegamento precedente resta salvato.")) }
+                Button(L("Rimuovi associazione"), role: .destructive) { ui.confirmForget = true }
+                    .alert(L("Rimuovere l’associazione alla TV?"), isPresented: $ui.confirmForget) {
+                        Button(L("Annulla"), role: .cancel) { }
+                        Button(L("Rimuovi associazione"), role: .destructive) { tv.forgetTV() }
+                    } message: { Text(L("Verranno rimossi l’associazione dal Portachiavi, l’indirizzo della TV, il MAC e il broadcast salvati. Per collegarti di nuovo dovrai confermare sulla TV.")) }
+            }.buttonStyle(.bordered).controlSize(.small)
+        }.padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
+    }
     private var connectionSettings: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-            Text(L("Collega una TV")).font(.headline)
+            VStack(alignment: .leading, spacing: 16) {
+                if !tv.host.isEmpty {
+                    savedTVSettings
+                    Button {
+                        ui.otherTV.toggle()
+                    } label: {
+                        HStack {
+                            Text(L("Configura un’altra TV")).fontWeight(.medium)
+                            Spacer()
+                            Image(systemName: ui.otherTV ? "chevron.down" : "chevron.right").font(.system(size: 10, weight: .semibold))
+                        }.contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityValue(ui.otherTV ? L("Espanso") : L("Compresso"))
+                }
+                if tv.host.isEmpty || ui.otherTV {
+                    discoverySettings
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8).padding(.horizontal, 2)
+        }.scrollIndicators(.visible)
+    }
+    private var discoverySettings: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(L("Cerca una TV")).font(.headline)
             Text(L("Accendi la TV e collegala alla stessa rete del Mac."))
                 .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {
@@ -258,32 +312,27 @@ struct RemoteView: View {
                     Button(L("Salva e collega")) { tv.saveSettings() }.disabled(tv.host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }.padding(.top, 6).disabled(tv.preparingTV)
             }
-            if !tv.host.isEmpty {
-                Divider()
-                Text(LF("TV salvata: %@", tv.host)).font(.system(size: 11)).foregroundStyle(.secondary)
-                if tv.connected {
-                    Button(L("Ripeti associazione")) { ui.confirmPair = true }.buttonStyle(.borderless)
-                        .alert(L("Ripeti associazione"), isPresented: $ui.confirmPair) {
-                            Button(L("Annulla"), role: .cancel) { }
-                            Button(L("Continua")) { tv.rePair() }
-                        } message: { Text(L("Conferma la richiesta sulla TV. Se il tentativo fallisce, il collegamento precedente resta salvato.")) }
-                }
-                Button(L("Rimuovi associazione"), role: .destructive) { ui.confirmForget = true }.buttonStyle(.borderless)
-                    .alert(L("Rimuovere l’associazione alla TV?"), isPresented: $ui.confirmForget) {
-                        Button(L("Annulla"), role: .cancel) { }
-                        Button(L("Rimuovi associazione"), role: .destructive) { tv.forgetTV() }
-                    } message: { Text(L("Verranno rimossi l’associazione dal Portachiavi, l’indirizzo della TV, il MAC e il broadcast salvati. Per collegarti di nuovo dovrai confermare sulla TV.")) }
-            }
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
-        }.scrollIndicators(.visible)
+        }.padding(.horizontal, 12)
+    }
+    private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10, content: content)
+            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
     }
     private var wakeSettings: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-            Text(L("Accensione dalla rete")).font(.headline).padding(.top, 4)
-            TextField(L("MAC della TV · AA:BB:CC:DD:EE:FF"), text: $tv.mac).textFieldStyle(.roundedBorder)
-            Button(tv.detectingMAC ? L("Ricerca MAC della TV…") : L("Rileva MAC dalla TV")) { tv.detectMAC() }
-                .disabled(tv.detectingMAC)
+            VStack(alignment: .leading, spacing: 14) {
+                settingsCard {
+                    Label(L("Accensione dalla rete"), systemImage: "power").font(.headline)
+                    Text(L("Accendi la TV sulla stessa rete del Mac tramite Wake-on-LAN."))
+                        .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    Text(L("MAC della TV")).font(.system(size: 11, weight: .semibold))
+                    TextField("AA:BB:CC:DD:EE:FF", text: $tv.mac).textFieldStyle(.roundedBorder)
+                        .accessibilityLabel(L("MAC della TV"))
+                    Button(tv.detectingMAC ? L("Ricerca MAC della TV…") : L("Rileva MAC dalla TV")) { tv.detectMAC() }
+                        .disabled(tv.detectingMAC || !tv.connected)
+                    Text(L("Rilevalo con la TV collegata. Usa il MAC Wi-Fi o Ethernet della connessione attiva."))
+                        .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if !tv.macDetectionMessage.isEmpty {
                 Text(tv.macDetectionMessage).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
@@ -294,37 +343,60 @@ struct RemoteView: View {
                     Button(L("Usa questo MAC")) { tv.applyMAC(candidate) }
                 }
             }
-            TextField(L("Broadcast · 192.168.1.255"), text: $tv.broadcast).textFieldStyle(.roundedBorder)
-            Text(L("Attiva l’accensione da dispositivo mobile sulla TV. Usa il MAC della connessione Wi-Fi o Ethernet, non l’identificativo AirPlay."))
-                .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Button(L("Salva e collega")) { tv.saveSettings() }.buttonStyle(.borderedProminent)
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+                }
+                Button { ui.broadcastDetails.toggle() } label: {
+                    HStack {
+                        Text(L("Impostazioni di rete")).fontWeight(.medium)
+                        Spacer()
+                        Image(systemName: ui.broadcastDetails ? "chevron.down" : "chevron.right").font(.system(size: 10, weight: .semibold))
+                    }.contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityValue(ui.broadcastDetails ? L("Espanso") : L("Compresso"))
+                if ui.broadcastDetails {
+                    settingsCard {
+                        Text(L("Indirizzo broadcast")).font(.system(size: 11, weight: .semibold))
+                        TextField("192.168.1.255", text: $tv.broadcast).textFieldStyle(.roundedBorder)
+                            .accessibilityLabel(L("Indirizzo broadcast"))
+                        Text(L("Calcolato dalla rete quando possibile. Modificalo solo se conosci la sottorete della TV."))
+                            .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Text(L("Sulla TV abilita l’accensione tramite Wi-Fi nelle impostazioni per dispositivi mobili."))
+                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Button(L("Salva e collega")) { tv.saveSettings() }.buttonStyle(.borderedProminent)
+            }.padding(.vertical, 8).padding(.horizontal, 2)
         }.scrollIndicators(.visible)
     }
     private var appSettings: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-            Toggle(L("Puntatore Magic Remote"), isOn: $magicRemoteEnabled)
-                .onChange(of: magicRemoteEnabled) { enabled in tv.stopPointerMotion(); ui.navigationMode = enabled ? 0 : 1 }
-            if magicRemoteEnabled {
-            Text(L("Velocità puntatore")).font(.headline)
-            Picker(L("Velocità puntatore"), selection: $pointerSensitivity) {
-                Text("1×").tag(2.0)
-                Text("2×").tag(4.0)
-                Text("3×").tag(6.0)
-                Text("4×").tag(8.0)
-            }.pickerStyle(.segmented).labelsHidden()
-            }
-            Divider().padding(.top, 2)
-            Text(L("Aggiornamenti")).font(.headline)
-            Toggle(L("Controlla automaticamente"), isOn: Binding(get: { updates.automatic }, set: { updates.setAutomatic($0) }))
-            Text(L("Contatta GitHub all’avvio e ogni 24 ore mentre l’app è aperta. Nessuna installazione automatica."))
-                .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Button(L("Controlla ora")) { updates.check(manual: true) }.disabled(updates.checking)
-            if !updates.message.isEmpty {
-                Text(updates.message).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+            VStack(alignment: .leading, spacing: 14) {
+                settingsCard {
+                    Label(L("Controlli"), systemImage: "cursorarrow.motionlines").font(.headline)
+                    Toggle(L("Puntatore Magic Remote"), isOn: $magicRemoteEnabled)
+                        .onChange(of: magicRemoteEnabled) { enabled in tv.stopPointerMotion(); ui.navigationMode = enabled ? 0 : 1 }
+                    if magicRemoteEnabled {
+                        Text(L("Velocità puntatore")).font(.system(size: 11)).foregroundStyle(.secondary)
+                        Picker(L("Velocità puntatore"), selection: $pointerSensitivity) {
+                            Text("1×").tag(2.0)
+                            Text("2×").tag(4.0)
+                            Text("3×").tag(6.0)
+                            Text("4×").tag(8.0)
+                        }.pickerStyle(.segmented).labelsHidden()
+                    }
+                }
+                settingsCard {
+                    Label(L("Aggiornamenti"), systemImage: "arrow.down.circle").font(.headline)
+                    Toggle(L("Controlla automaticamente"), isOn: Binding(get: { updates.automatic }, set: { updates.setAutomatic($0) }))
+                    Text(L("Contatta GitHub all’avvio e ogni 24 ore mentre l’app è aperta. Nessuna installazione automatica."))
+                        .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    HStack {
+                        Button(L("Controlla ora")) { updates.check(manual: true) }.disabled(updates.checking)
+                        if updates.checking { ProgressView().controlSize(.small) }
+                    }
+                    if !updates.message.isEmpty {
+                        Text(updates.message).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }.padding(.vertical, 8).padding(.horizontal, 2)
         }.scrollIndicators(.visible)
     }
 }

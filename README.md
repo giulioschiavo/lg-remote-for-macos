@@ -49,7 +49,7 @@ The three settings tabs, shown with sample data.
 - Mac and TV on the same local network, without guest-network/client isolation.
 - Approval of the pairing request on the TV at first connection.
 
-The current implementation connects over `ws://<TV>:3000`. Encrypted `wss://` connections on port 3001 are not implemented yet. A TV that only accepts that transport will not connect with this version.
+The app prefers encrypted `wss://<TV>:3001`. At first use, approve the TV certificate only if you recognize the device on your network; its SHA-256 fingerprint is stored in Keychain. A changed or rejected certificate blocks the secure connection. Legacy `ws://<TV>:3000` is tried only when the secure endpoint refuses the connection and no certificate has already been approved. Certificate, TLS and timeout errors do not trigger a downgrade. The connection status shows the transport in use.
 
 **Tested TV:** LG 55UM7450PLA. Basic remote commands and relative pointer movement were tested by the author. Wake-on-LAN is implemented but should be verified for your particular TV and network. No broader compatibility certification is claimed.
 
@@ -59,7 +59,7 @@ LG NetCast TVs, non-webOS TVs and external HDMI set-top boxes are outside the su
 
 ## Installation
 
-Download [LG Remote 1.0.1 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.1/LG-Remote-1.0.1-macOS-arm64.zip) from [Release v1.0.1](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.1), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
+Download [LG Remote 1.0.2 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.2/LG-Remote-1.0.2-macOS-arm64.zip) from [Release v1.0.2](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.2), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
 
 Current locally packaged builds are ad-hoc signed, **not Developer ID signed or notarized**. macOS may display an unverified-developer warning. Build from source if you prefer to inspect and compile the code. Developer ID signing and notarization are planned for easier distribution.
 
@@ -75,7 +75,7 @@ Pairing is stored in Keychain. **Pair Again** requests a new approval while pres
 
 For TVs selected through discovery, the app remembers their device identity. If the saved IP fails at app startup, it performs one bounded local search for that same TV and updates its IP when the match is unambiguous. Existing manual associations can obtain this identity by selecting the TV through **Find TV** once. This does not replace the IP used for commands: the MAC is used for Wake-on-LAN. There is no periodic TV scan, login service or background helper.
 
-Settings are divided into **TV**, **Power On** and **App** tabs.
+Settings are divided into **TV**, **Power On** and **App** tabs. The TV tab puts the paired TV first, with **Set up another TV** separate from pairing management. Reconnect is available here when disconnected; it does not wake the TV. Use **Turn On** in the remote to wake and reconnect automatically. Broadcast configuration is under **Network settings** in Power On.
 
 Click the menu bar icon to open or hide the panel. Escape and clicking outside also hide it.
 
@@ -118,6 +118,8 @@ Keep the TV plugged in and connected to the network while in standby. Keep the M
 3. Review the broadcast address, calculated automatically when the local subnet is unambiguous; enter it manually if needed. `192.168.1.255` is only appropriate for a `192.168.1.x` network with a `255.255.255.0` mask.
 4. Save, put the TV in standby and try **Turn On**.
 
+Turn On sends five Wake-on-LAN packets at 300 ms intervals, then attempts to reconnect. The app monitors the existing connection and TV power-state events; an unreachable TV is not assumed to be powered off.
+
 The TV must stay powered and its network hardware must support wake from standby. The app sends a local Wake-on-LAN packet; it does not offer wake over the internet, and sending a packet does not guarantee the TV has turned on.
 
 ### If power-on stops working after a while in standby
@@ -130,7 +132,7 @@ Turn the TV off normally, leave it plugged in, and test power-on after one minut
 
 ## Privacy
 
-TV discovery, commands and Wake-on-LAN traffic stay on the local network. The app has no analytics, ads, cloud account or tracking SDK. Pairing keys are stored in Keychain; TV address and device identity, wake settings and pointer preferences use local macOS preferences. Keys are not embedded in the app or repository.
+TV discovery, commands and Wake-on-LAN traffic stay on the local network. The app has no analytics, ads, cloud account or tracking SDK. Pairing keys and approved certificate fingerprints are stored in Keychain; TV address and device identity, wake settings and pointer preferences use local macOS preferences. Keys are not embedded in the app or repository.
 
 The app includes a default-off, opt-in check against GitHub Releases at startup and then every 24 hours while the app is running. A manual check is always available. When a release is available, the app shows an in-app banner and, if macOS notification permission is available, a native notification. Opening the release link is always manual: the app never installs or downloads an update automatically. Internet requests go only to GitHub when the user has enabled the check or started a manual check. There are no analytics or tracking requests.
 
@@ -159,7 +161,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md). This is
 ## Roadmap
 
 - Broader real-device compatibility testing.
-- Secure WebSocket transport and broader network compatibility testing.
+- Broader network and prolonged-standby wake testing.
 - Developer ID signing/notarization and potential Intel builds.
 
 ## License and credits

@@ -49,7 +49,7 @@ Le tre schede delle impostazioni, con dati dimostrativi.
 - Mac e TV sulla stessa rete locale, senza isolamento dei dispositivi o rete ospiti.
 - Conferma della richiesta di associazione sul televisore al primo collegamento.
 
-L’implementazione attuale usa `ws://<TV>:3000`. Il collegamento cifrato `wss://` sulla porta 3001 non è ancora implementato: una TV che accetta solo quello non potrà collegarsi con questa versione.
+L’app preferisce il collegamento cifrato `wss://<TV>:3001`. Al primo utilizzo approva il certificato solo se riconosci la TV sulla tua rete: l’impronta SHA-256 viene salvata nel Portachiavi. Un certificato cambiato o rifiutato blocca il collegamento sicuro. Il ripiego su `ws://<TV>:3000` avviene soltanto se la porta sicura rifiuta la connessione e non esiste già un certificato approvato. Errori di certificato, TLS o timeout non provocano il ripiego. Lo stato del collegamento indica il trasporto utilizzato.
 
 **Modello testato:** LG 55UM7450PLA. L’autore ha provato i comandi base e il puntatore relativo. Il Wake-on-LAN è implementato, ma va verificato sul singolo televisore e sulla rete utilizzata. Non viene dichiarata una certificazione di compatibilità più ampia.
 
@@ -59,7 +59,7 @@ Sono fuori dall’ambito supportato le TV LG NetCast, le TV senza webOS e i deco
 
 ## Installazione
 
-Scarica [Telecomando LG 1.0.1 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.1/LG-Remote-1.0.1-macOS-arm64.zip) dalla [Release v1.0.1](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.1), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
+Scarica [Telecomando LG 1.0.2 per Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.2/LG-Remote-1.0.2-macOS-arm64.zip) dalla [Release v1.0.2](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.2), estrai l’app e sposta **Telecomando LG.app** in Applicazioni. Il nome visualizzato segue la lingua dell’app.
 
 Le compilazioni locali attuali hanno firma ad-hoc: **non sono firmate con Developer ID né notarizzate**. macOS può mostrare un avviso sullo sviluppatore non verificato. Se preferisci esaminare e compilare il codice, usa i sorgenti. Firma Developer ID e notarizzazione sono previste per semplificare la distribuzione.
 
@@ -75,7 +75,7 @@ L’associazione viene salvata nel Portachiavi. **Ripeti associazione** richiede
 
 Per le TV selezionate tramite ricerca, l’app ricorda anche l’identità del dispositivo. Se all’avvio dell’app l’IP salvato non risponde, esegue una sola ricerca locale limitata per ritrovare quella TV e aggiorna l’IP quando il risultato è univoco. Per le associazioni manuali già esistenti, seleziona una volta la TV tramite **Cerca TV** per memorizzarne l’identità. I comandi continuano a usare l’IP: il MAC serve al Wake-on-LAN. Non ci sono scansioni periodiche della TV, servizi al login o processi ausiliari in background.
 
-Le impostazioni sono divise nelle schede **TV**, **Accensione** e **App**.
+Le impostazioni sono divise nelle schede **TV**, **Accensione** e **App**. La scheda TV mostra prima il televisore associato e separa **Configura un’altra TV** dalla gestione dell’associazione. **Ricollega** è disponibile qui quando scollegata e richiede una TV già accesa. Usa **Accendi** nel telecomando per risvegliarla e ricollegarti automaticamente. Il broadcast è in **Impostazioni di rete** nella scheda Accensione.
 
 Un clic sull’icona nella barra apre o nasconde il pannello. Anche Escape e un clic esterno lo nascondono.
 
@@ -118,6 +118,8 @@ Lascia la TV alimentata e collegata alla rete anche in standby. Il Mac deve esse
 3. Verifica il broadcast, calcolato automaticamente quando la sottorete locale è univoca; inseriscilo manualmente se necessario. `192.168.1.255` è adatto solo a una rete `192.168.1.x` con maschera `255.255.255.0`.
 4. Salva, metti la TV in standby e prova **Accendi**.
 
+Accendi invia cinque pacchetti Wake-on-LAN a intervalli di 300 ms, poi tenta il ricollegamento. L’app controlla la connessione esistente e ascolta gli eventi di alimentazione della TV; una TV non raggiungibile non viene automaticamente considerata spenta.
+
 La TV deve restare alimentata e la sua rete deve supportare il risveglio dallo standby. L’app invia un pacchetto Wake-on-LAN locale: non offre accensione via internet e l’invio non garantisce che la TV si sia accesa.
 
 ### Se l’accensione smette di funzionare dopo un po’ in standby
@@ -130,7 +132,7 @@ Spegni normalmente la TV, lasciala alimentata e prova ad accenderla dopo un minu
 
 ## Privacy
 
-Ricerca TV, comandi e Wake-on-LAN restano sulla rete locale. Non ci sono statistiche d’uso, pubblicità, account cloud o strumenti di tracciamento. Le chiavi di associazione sono nel Portachiavi; indirizzo e identità TV, accensione e velocità sono nelle preferenze locali di macOS. Nessuna chiave è incorporata nell’app o nel repository.
+Ricerca TV, comandi e Wake-on-LAN restano sulla rete locale. Non ci sono statistiche d’uso, pubblicità, account cloud o strumenti di tracciamento. Le chiavi di associazione e le impronte dei certificati approvati sono nel Portachiavi; indirizzo e identità TV, accensione e velocità sono nelle preferenze locali di macOS. Nessuna chiave è incorporata nell’app o nel repository.
 
 L’app include un controllo facoltativo, disattivato in modo predefinito, tramite GitHub Releases: parte all’avvio e poi ogni 24 ore mentre l’app resta aperta. Il controllo manuale è sempre disponibile. Quando c’è una release disponibile, l’app mostra un banner interno e, se macOS ha concesso il permesso, una notifica nativa. L’apertura del link alla release resta manuale: l’app non installa né scarica mai aggiornamenti automaticamente. Le richieste internet vanno solo a GitHub quando il controllo è stato attivato dall’utente o avviato manualmente. Non ci sono statistiche d’uso né richieste di tracciamento.
 
@@ -159,7 +161,7 @@ Vedi [CONTRIBUTING.md](CONTRIBUTING.md) e [CHANGELOG.md](CHANGELOG.md). È un pr
 ## Sviluppi previsti
 
 - Test su altri modelli reali.
-- Collegamento WebSocket cifrato e test su altre configurazioni di rete.
+- Test su altre reti e sul risveglio dopo standby prolungato.
 - Firma Developer ID, notarizzazione ed eventuali versioni Intel.
 
 ## Licenza e crediti

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 — 27 ottobre 2026 · build 24
+
+WSS con certificato approvato e WS di riserva limitato; cinque pacchetti Wake-on-LAN; stato TV aggiornato con eventi e ping; impostazioni riorganizzate e screenshot IT/EN aggiornati. Vedi [note della release](RELEASE-NOTES-1.0.2.md). Accensione immediata e riconnessione verificate dall’utente; standby prolungato ancora da verificare.
+
 ## 1.0.1 — Setup improvements / Migliorie alla configurazione (24 October 2026, build 19)
 
 ### Italiano

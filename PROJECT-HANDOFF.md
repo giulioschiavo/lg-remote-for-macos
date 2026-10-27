@@ -1,40 +1,31 @@
 # Passaggio progetto LG Remote per macOS
 
-Aggiornato: 24 ottobre 2026. Release pubblicata: **1.0.1, build 19**, Apple Silicon arm64, macOS 13+.
+Aggiornato: 27 ottobre 2026. Versione **1.0.2, build 24**, Apple Silicon arm64, macOS 13+.
 
 ## Distribuzione
 
 Repository: https://github.com/giulioschiavo/lg-remote-for-macos
-Release verificata: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.1
-Pacchetto: `Downloads/LG-Remote-1.0.1-macOS-arm64.zip`.
-SHA-256: `689a051b67e033b25be57fc5565deaaee7fa873bccef8b0fdaca4671bc39cd66`.
-Pubblicazione e API Latest verificate. Download pubblico integro e identico al pacchetto locale. Sorgenti al commit `b32171f88ff7094c943e75411b3d255ae2d22045`.
+Release: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.2
+Pacchetto: `Downloads/LG-Remote-1.0.2-macOS-arm64.zip`.
+SHA-256: `ba92f75896a917096e432ad87dcc9493e694317b0e695ca4bfe1286289fbee28`.
+Firma ad-hoc; nessun Developer ID o notarizzazione. Verificare lo stato pubblico della release separatamente dai file locali.
 
-## Decisioni
+## Decisioni da conservare
 
 - Progetto personale MIT di Giulio Schiavo, indipendente da LG; sviluppo assistito dall’AI.
-- Test reali dichiarati su LG 55UM7450PLA; compatibilità universale non garantita.
-- Wake-on-LAN soltanto sulla rete locale. Il risveglio dopo standby prolungato resta da verificare: Quick Start+ non ha risolto il caso segnalato, mentre ThinQ riesce ad accendere la TV.
-- Wi-Fi ed Ethernet hanno MAC diversi. Il MAC serve all’accensione, non sostituisce l’IP per i comandi.
-- Comandi tramite WS porta 3000; WSS porta 3001 ancora da implementare.
-- Chiavi nel Portachiavi, preferenze locali; niente analytics o account cloud.
-- Controllo GitHub Releases facoltativo, disattivato inizialmente: all’avvio e ogni 24 ore mentre l’app resta aperta, oppure manualmente. Banner e notifica se autorizzata; nessun download/installazione automatico.
-- Nessun servizio al login, helper o scansione TV periodica. Un solo tentativo SSDP limitato in caso di collegamento iniziale fallito, con identità della TV già nota.
-- Firma ad-hoc, senza Developer ID o notarizzazione.
-- Documentazione IT/EN, screenshot con dati sintetici, copertina e icone approvati da preservare.
+- Modello testato LG 55UM7450PLA; compatibilità universale non garantita.
+- Wake-on-LAN solo locale; MAC della scheda attiva, distinto dall’IP usato per i comandi. Cinque pacchetti UDP9, intervalli300ms, solo premendo Accendi; successivo ricollegamento automatico.
+- WSS3001 preferito. Certificato approvato esplicitamente al primo uso e impronta SHA256 nel Portachiavi. Certificato diverso o rifiutato bloccato. WS3000 solo se endpoint sicuro rifiuta la connessione e non esiste un pin; nessun downgrade per TLS, timeout o errore lettura Portachiavi. Puntatore vincolato allo stesso host e al trasporto sicuro. Rimuovi associazione elimina anche i pin.
+- Eventi webOS Power Off/Suspend/Active Standby indicano standby. Screen Off resta acceso. Ping della connessione ogni8s con timeout3s. Non confondere irraggiungibile e spento.
+- Nessun servizio al login, helper o discovery periodico. Un solo tentativo SSDP limitato su primo collegamento fallito con identità nota. Per vecchie associazioni, selezionare tramite Cerca TV una volta. Identità SSDP non autenticata crittograficamente.
+- Chiavi nel Portachiavi; preferenze locali; niente analytics o account cloud. Controllo GitHub Releases facoltativo e disattivato inizialmente: avvio e ogni24ore mentre aperta, oppure manuale. Banner/notifica se autorizzata, nessun download/installazione automatico.
+- Impostazioni TV/Accensione/App. TV associata prima della configurazione alternativa. Ricollega solo nelle impostazioni e con TV già accesa. MAC in primo piano, broadcast nelle opzioni di rete. Controlli e aggiornamenti in gruppi distinti.
+- Screenshot IT/EN con dati sintetici; preservare copertina e icone approvate. Mantenere solo l’app installata come .app, prove archiviate in ZIP per evitare duplicati Launchpad.
 
-## Novità 1.0.1
+## Verifiche
 
-Ricerca TV SSDP e associazione guidata; indirizzo manuale opzionale. Identità SSDP salvata per ritrovare la stessa TV dopo un cambio IP; per vecchie associazioni selezionarla tramite Cerca TV una volta. Identità locale non crittograficamente autenticata.
+Build, firma, integrità ZIP e self-test IT/EN superati. Test di fallback TLS, riconoscimento stati standby e sequenza Wake-on-LAN/cancellazione superati. Otto screenshot renderizzati e controllati. L’utente ha confermato WSS attivo, accensione immediata dall’app e riconnessione automatica sulla TV reale.
 
-Rilevamento MAC con wifiInfo/wiredInfo e stato delle schede: solo una scheda confermata attiva può compilare un campo vuoto. Candidati ambigui e cache ARP richiedono conferma. Broadcast calcolato dalla sottorete quando univoco.
+Da verificare: risveglio dopo standby notturno, recupero dopo cambio DHCP reale, altri modelli e consegna di una notifica per una release futura. Quick Start+ da solo non ha risolto il caso notturno. Prenotazione DHCP consigliata, senza garanzia di risveglio o autorizzazione permanente.
 
-Impostazioni TV / Accensione / App; Ripeti associazione conserva la vecchia chiave fino al successo; Rimuovi associazione richiede conferma e cancella collegamento e impostazioni di accensione. Menu sorgente allineato a destra.
-
-## Verifiche e attività residue
-
-Build 19, firma e ZIP verificati; binario installato identico al pacchetto. Self-test IT/EN e test helper MAC/broadcast, SSDP e aggiornamenti superati. Ricerca reale: una TV webOS rilevata. Il MAC Wi-Fi proposto è stato confrontato dall’utente con le informazioni TV ed è corretto.
-
-Restano da verificare il recupero dopo un cambio DHCP reale, il risveglio dopo standby prolungato, la consegna di una notifica per una futura release e altri modelli TV. Consigliata prenotazione DHCP sul router; non garantisce autorizzazione permanente o risveglio.
-
-Prima di ogni modifica futura verificare file e stato remoto. Conservare solo la copia installata come .app e archiviare le prove in ZIP per evitare duplicati nel Launchpad.
+Prima delle modifiche verificare file e stato remoto. La versione1.0.1 rimane recuperabile dalla sua release.

@@ -147,3 +147,49 @@
 "TV salvata non trovata. Accendila e usa Cerca TV nelle impostazioni." = "Saved TV not found. Turn it on and use Find TVs in Settings.";
 "Wi-Fi · verifica la connessione attiva" = "Wi-Fi · check the active connection";
 "Ethernet · verifica la connessione attiva" = "Ethernet · check the active connection";
+
+"Collegata · WSS" = "Connected · WSS";
+
+"Collegata · WS non cifrato" = "Connected · unencrypted WS";
+
+"Certificato TV cambiato" = "TV certificate changed";
+
+"Il certificato non corrisponde a quello approvato. Il collegamento è stato bloccato. Verifica la TV prima di rimuovere l’associazione." = "The certificate does not match the approved certificate. The connection was blocked. Verify the TV before removing the pairing.";
+
+"Approva il collegamento sicuro alla TV" = "Approve the secure TV connection";
+
+"Approva solo se riconosci la TV sulla tua rete. L’identità non è ancora verificata. L’impronta verrà conservata nel Portachiavi." = "Approve only if you recognize the TV on your network. Its identity has not yet been verified. The fingerprint will be stored in Keychain.";
+
+"Approva certificato" = "Approve certificate";
+
+"TV in standby" = "TV in standby";
+
+"Cerca una TV" = "Find a TV";
+
+"TV associata" = "Paired TV";
+
+"Collegamento attivo" = "Connection active";
+
+"Associazione salvata" = "Pairing saved";
+
+"Per accendere la TV usa Accendi nel telecomando. Ricollega serve quando la TV è già accesa." = "Use Turn On in the remote to wake the TV. Reconnect is for a TV that is already on.";
+
+"Gestisci associazione" = "Manage pairing";
+
+"Configura un’altra TV" = "Set up another TV";
+
+"Accendi la TV sulla stessa rete del Mac tramite Wake-on-LAN." = "Wake the TV on the same network as your Mac using Wake-on-LAN.";
+
+"MAC della TV" = "TV MAC address";
+
+"Rilevalo con la TV collegata. Usa il MAC Wi-Fi o Ethernet della connessione attiva." = "Detect it while connected to the TV. Use the MAC of its active Wi-Fi or Ethernet connection.";
+
+"Impostazioni di rete" = "Network settings";
+
+"Indirizzo broadcast" = "Broadcast address";
+
+"Calcolato dalla rete quando possibile. Modificalo solo se conosci la sottorete della TV." = "Calculated from the network when possible. Change it only if you know the TV subnet.";
+
+"Sulla TV abilita l’accensione tramite Wi-Fi nelle impostazioni per dispositivi mobili." = "Enable Wi-Fi power-on in the TV settings for mobile devices.";
+
+"Controlli" = "Controls";

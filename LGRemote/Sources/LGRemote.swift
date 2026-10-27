@@ -81,6 +81,15 @@ enum WakeOnLAN {
         guard let address = bytes(mac) else { throw RemoteError.message(L("Inserisci il MAC della scheda di rete della TV nelle impostazioni.")) }
         return Data(Array(repeating: UInt8(255), count: 6) + Array(repeating: address, count: 16).flatMap { $0 })
     }
+    static let burstCount = 5
+    static let burstInterval: UInt64 = 300_000_000
+    static func sendBurst(mac: String, broadcast: String, transmit: (String, String) throws -> Void = send) async throws {
+        for index in 0..<burstCount {
+            try Task.checkCancellation()
+            try transmit(mac, broadcast)
+            if index < burstCount - 1 { try await Task.sleep(nanoseconds: burstInterval) }
+        }
+    }
     static func send(mac: String, broadcast: String) throws {
         let data = try packet(mac)
         let fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
@@ -138,6 +147,9 @@ final class TVRemote: NSObject, ObservableObject {
     private var wakeTask: Task<Void, Never>?
     private var wakeGeneration = UUID()
     private var session = URLSession(configuration: .default)
+    private var secureTransport = false
+    private var healthDeadline: Task<Void, Never>?
+    private var healthProbe = UUID()
     private var socket: URLSessionWebSocketTask?
     private var buttonSocket: URLSessionWebSocketTask?
     private var reader: Task<Void, Never>?
@@ -178,11 +190,13 @@ final class TVRemote: NSObject, ObservableObject {
         identityTask?.cancel(); identityTask = nil; detectingMAC = false
         macCandidates = []; macDetectionMessage = ""
         wakeGeneration = UUID(); wakeTask?.cancel(); wakeTask = nil
+        healthProbe = UUID(); healthDeadline?.cancel(); healthDeadline = nil
         reader?.cancel(); deadline?.cancel(); poller?.cancel(); inputWorker?.cancel()
         inputWorker = nil; inputEvents.removeAll()
         socket?.cancel(with: .goingAway, reason: nil)
         buttonSocket?.cancel(with: .goingAway, reason: nil)
         socket = nil; buttonSocket = nil
+        session.invalidateAndCancel()
         connected = false; connecting = false; volumeKnown = false
         powerOffPending = false
         inputs = []; channel = ""
@@ -194,14 +208,14 @@ final class TVRemote: NSObject, ObservableObject {
         requestTimers.values.forEach { $0.cancel() }; requestTimers.removeAll()
         for callback in callbacks.values { callback.resume(throwing: RemoteError.message(L("Collegamento interrotto."))) }
     }
-    func connect(forcePairing: Bool = false, allowRediscovery: Bool = true) {
+    func connect(forcePairing: Bool = false, allowRediscovery: Bool = true, useSecure: Bool = true) {
         guard !connected && !connecting else { return }
         cancelDiscovery()
         let savedIdentity = UserDefaults.standard.string(forKey: "host") == host ? UserDefaults.standard.string(forKey: "tvDeviceID") : nil
         let account = savedIdentity.map { "device:" + $0 } ?? host
-        // The plain WebSocket transport was verified on this specific LG by the user.
+        // Prefer TLS; only a refused secure endpoint permits a legacy WS retry.
         guard !host.isEmpty, !host.contains("/"), !host.contains(":"), !host.contains(" "),
-              let url = URL(string: "ws://\(host):3000") else {
+              let url = URL(string: "\(useSecure ? "wss" : "ws")://\(host):\(useSecure ? 3001 : 3000)") else {
             error = L("Inserisci un nome di rete o un indirizzo IPv4 valido, senza http://."); return
         }
         let savedKey: String?
@@ -220,6 +234,9 @@ final class TVRemote: NSObject, ObservableObject {
         error = nil; connecting = true; status = L("Connessione a LG 55…")
         let connectionHost = host
         generation = UUID(); let token = generation
+        session.invalidateAndCancel()
+        session = URLSession(configuration: .default, delegate: TVTLSDelegate(host: host, account: account), delegateQueue: nil)
+        secureTransport = useSecure
         let ws = session.webSocketTask(with: url)
         socket = ws; ws.resume()
         reader = Task {
@@ -253,9 +270,12 @@ final class TVRemote: NSObject, ObservableObject {
                 if shuttingDown {
                     status = L("TV disconnessa dopo richiesta spegnimento")
                     self.error = nil
+                } else if !wasConnected, useSecure, TVTLSDelegate.permitsLegacyFallback(error, account: account) {
+                    connect(forcePairing: forcePairing, allowRediscovery: allowRediscovery, useSecure: false)
                 } else if !wasConnected, allowRediscovery, !forcePairing, let savedIdentity {
                     rediscoverSavedTV(identity: savedIdentity)
                 } else {
+                    status = L("TV non raggiungibile")
                     self.error = L("TV non raggiungibile. Controlla che sia accesa e sulla stessa rete, poi premi Collega.")
                 }
             }
@@ -266,24 +286,39 @@ final class TVRemote: NSObject, ObservableObject {
             disconnect(); error = L("Autorizzazione non completata. Premi Collega e accetta sulla TV.")
         }
     }
+    static func isStandby(_ state: String) -> Bool {
+        ["Power Off", "Suspend", "Active Standby"].contains(state)
+    }
     private func handle(_ body: [String: Any], connectionHost: String) {
         let type = body["type"] as? String ?? ""
         let payload = body["payload"] as? [String: Any] ?? [:]
         let id = body["id"] as? String ?? ""
+        if id == "power-state", type != "error", let state = payload["state"] as? String,
+           Self.isStandby(state) {
+            disconnect(); status = L("TV in standby"); error = nil
+            return
+        }
         if type == "registered" {
-            deadline?.cancel(); connecting = false; connected = true; activeHost = connectionHost; status = L("Collegata")
+            deadline?.cancel(); connecting = false; connected = true; activeHost = connectionHost; status = secureTransport ? L("Collegata · WSS") : L("Collegata · WS non cifrato")
             if let key = payload["client-key"] as? String ?? activePairingKey, !PairingStore.save(key, host: activePairingAccount ?? connectionHost) {
                 error = L("Collegata, ma non è stato possibile salvare l’associazione nel Portachiavi.")
             } else if payload["client-key"] is String || usingSavedKey {
                 UserDefaults.standard.set(connectionHost, forKey: "pairedHost")
                 UserDefaults.standard.set(Self.permissionRevision, forKey: "permissionRevision.\(connectionHost)")
             }
-            Task { await refresh() }
+            let powerSocket = socket
+            Task {
+                guard let powerSocket else { return }
+                try? await send(["id": "power-state", "type": "subscribe", "uri": "ssap://com.webos.service.tvpower/power/getPowerState"], over: powerSocket)
+                guard connected else { return }
+                await refresh()
+            }
             if mac.isEmpty { detectMAC(automatic: true) }
             poller = Task {
                 while !Task.isCancelled {
                     try? await Task.sleep(nanoseconds: 8_000_000_000)
                     guard !Task.isCancelled, connected else { return }
+                    checkConnection()
                     await refreshVolume()
                 }
             }
@@ -297,6 +332,27 @@ final class TVRemote: NSObject, ObservableObject {
         } else if type == "error" && id == "pair" {
             disconnect()
             error = L("Associazione rifiutata. Premi Nuova associazione nelle impostazioni e accetta sulla TV.")
+        }
+    }
+    // A bounded WebSocket ping checks the existing connection, without discovery.
+    private func checkConnection() {
+        guard connected, let ws = socket else { return }
+        let token = generation, probe = UUID()
+        healthProbe = probe
+        healthDeadline?.cancel()
+        healthDeadline = Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled, token == generation, probe == healthProbe else { return }
+            disconnect(); status = L("TV non raggiungibile"); error = nil
+        }
+        ws.sendPing { [weak self] failure in
+            Task { @MainActor in
+                guard let self, token == self.generation, probe == self.healthProbe else { return }
+                self.healthDeadline?.cancel(); self.healthDeadline = nil
+                if failure != nil {
+                    self.disconnect(); self.status = L("TV non raggiungibile"); self.error = nil
+                }
+            }
         }
     }
     private func send(_ object: [String: Any], over ws: URLSessionWebSocketTask) async throws {
@@ -376,7 +432,16 @@ final class TVRemote: NSObject, ObservableObject {
         guard token == generation, connected else { throw RemoteError.message(L("Collegamento interrotto.")) }
         guard let path = result["socketPath"] as? String, let url = URL(string: path),
               ["ws", "wss"].contains(url.scheme ?? ""), url.host != nil else { throw RemoteError.message(L("Puntatore non disponibile.")) }
-        let ws = session.webSocketTask(with: url); buttonSocket = ws; ws.resume()
+        guard url.host?.lowercased() == activeHost?.lowercased(), url.user == nil, url.password == nil else {
+            throw RemoteError.message(L("Puntatore non disponibile."))
+        }
+        var endpoint = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        if secureTransport {
+            endpoint.scheme = "wss"
+            if endpoint.port == 3000 { endpoint.port = 3001 }
+        }
+        guard let pointerURL = endpoint.url else { throw RemoteError.message(L("Puntatore non disponibile.")) }
+        let ws = session.webSocketTask(with: pointerURL); buttonSocket = ws; ws.resume()
         return ws
     }
     private var pointerMotionGeneration = 0
@@ -428,17 +493,22 @@ final class TVRemote: NSObject, ObservableObject {
         }
     }
     func wake() {
-        do {
-            try WakeOnLAN.send(mac: mac, broadcast: broadcast)
-            error = nil; status = L("Accensione richiesta…")
-            wakeTask?.cancel(); let wakeToken = UUID(); wakeGeneration = wakeToken
-            let target = host
-            wakeTask = Task {
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
+        wakeTask?.cancel(); let wakeToken = UUID(); wakeGeneration = wakeToken
+        let target = host, wakeMAC = mac, wakeBroadcast = broadcast
+        error = nil; status = L("Accensione richiesta…")
+        wakeTask = Task {
+            do {
+                guard wakeToken == wakeGeneration, target == host else { return }
+                try await WakeOnLAN.sendBurst(mac: wakeMAC, broadcast: wakeBroadcast)
+                try await Task.sleep(nanoseconds: 5_000_000_000)
                 guard !Task.isCancelled, wakeToken == wakeGeneration, target == host, !connected, !connecting else { return }
                 connect()
+            } catch is CancellationError { return }
+            catch {
+                guard wakeToken == wakeGeneration else { return }
+                self.error = error.localizedDescription; settings = true
             }
-        } catch { self.error = error.localizedDescription; settings = true }
+        }
     }
     func detectMAC(automatic: Bool = false) {
         guard connected, activeHost == host else {
@@ -568,6 +638,8 @@ final class TVRemote: NSObject, ObservableObject {
         var accounts = Set([savedHost])
         if let identity = UserDefaults.standard.string(forKey: "tvDeviceID") { accounts.insert("device:" + identity) }
         if let legacy = UserDefaults.standard.string(forKey: "pairingLegacyHost") { accounts.insert(legacy) }
+        let pins = accounts.map { "tls:" + $0 }
+        accounts.formUnion(pins)
         let removed = accounts.map { PairingStore.remove($0) }
         guard removed.allSatisfy({ $0 }) else {
             error = L("Impossibile rimuovere l’associazione dal Portachiavi. Consenti l’accesso all’app e riprova.")
@@ -597,13 +669,39 @@ if let path = Bundle.main.object(forInfoDictionaryKey: "LGRemoteExportPath") as?
         catch { print("Discovery failed: \(error)"); exit(1) }
     }
     NSApplication.shared.run()
+} else if CommandLine.arguments.contains("--self-test-wake-burst") {
+    Task { @MainActor in
+        do {
+        var sent = 0
+        let start = Date()
+        try await WakeOnLAN.sendBurst(mac: "02:00:00:00:00:01", broadcast: "192.0.2.255") { _, _ in sent += 1 }
+        precondition(sent == 5 && Date().timeIntervalSince(start) >= 1.2)
+        var cancelledSends = 0
+        let cancelled = Task { @MainActor in
+            try await WakeOnLAN.sendBurst(mac: "02:00:00:00:00:01", broadcast: "192.0.2.255") { _, _ in cancelledSends += 1 }
+        }
+        cancelled.cancel()
+        do { try await cancelled.value; preconditionFailure("Cancellation ignored") }
+        catch is CancellationError { precondition(cancelledSends == 0) }
+        catch { preconditionFailure("Unexpected error") }
+        print("PASS: five sends at 300ms intervals; cancellation; no network traffic")
+        exit(0)
+        } catch { fputs("Wake burst test failed\n", stderr); exit(1) }
+    }
+    dispatchMain()
 } else if CommandLine.arguments.contains("--self-test") {
+    for state in ["Power Off", "Suspend", "Active Standby"] { precondition(TVRemote.isStandby(state)) }
+    for state in ["Active", "Screen Off", "Screen Saver", "unknown"] { precondition(!TVRemote.isStandby(state)) }
     let offline = TVRemote()
     offline.host = "example.invalid"; offline.mac = "02:00:00:00:00:01"
     offline.rePair()
     precondition(offline.mac == "02:00:00:00:00:01" && offline.error != nil && !offline.connecting)
     offline.detectMAC()
     precondition(!offline.macDetectionMessage.isEmpty && !offline.detectingMAC && offline.macCandidates.isEmpty)
+    precondition(TVTLSDelegate.isUnavailableEndpoint(URLError(.cannotConnectToHost)))
+    for code in [URLError.Code.serverCertificateUntrusted, .serverCertificateHasBadDate, .secureConnectionFailed, .cancelled, .timedOut, .userAuthenticationRequired] {
+        precondition(!TVTLSDelegate.isUnavailableEndpoint(URLError(code)))
+    }
     let packet = try WakeOnLAN.packet("02:00:00:00:00:01")
     precondition(packet.count == 102)
     precondition(Array(packet.prefix(6)) == Array(repeating: 255, count: 6))

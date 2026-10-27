@@ -147,3 +147,49 @@
 "TV salvata non trovata. Accendila e usa Cerca TV nelle impostazioni." = "TV salvata non trovata. Accendila e usa Cerca TV nelle impostazioni.";
 "Wi-Fi · verifica la connessione attiva" = "Wi-Fi · verifica la connessione attiva";
 "Ethernet · verifica la connessione attiva" = "Ethernet · verifica la connessione attiva";
+
+"Collegata · WSS" = "Collegata · WSS";
+
+"Collegata · WS non cifrato" = "Collegata · WS non cifrato";
+
+"Certificato TV cambiato" = "Certificato TV cambiato";
+
+"Il certificato non corrisponde a quello approvato. Il collegamento è stato bloccato. Verifica la TV prima di rimuovere l’associazione." = "Il certificato non corrisponde a quello approvato. Il collegamento è stato bloccato. Verifica la TV prima di rimuovere l’associazione.";
+
+"Approva il collegamento sicuro alla TV" = "Approva il collegamento sicuro alla TV";
+
+"Approva solo se riconosci la TV sulla tua rete. L’identità non è ancora verificata. L’impronta verrà conservata nel Portachiavi." = "Approva solo se riconosci la TV sulla tua rete. L’identità non è ancora verificata. L’impronta verrà conservata nel Portachiavi.";
+
+"Approva certificato" = "Approva certificato";
+
+"TV in standby" = "TV in standby";
+
+"Cerca una TV" = "Cerca una TV";
+
+"TV associata" = "TV associata";
+
+"Collegamento attivo" = "Collegamento attivo";
+
+"Associazione salvata" = "Associazione salvata";
+
+"Per accendere la TV usa Accendi nel telecomando. Ricollega serve quando la TV è già accesa." = "Per accendere la TV usa Accendi nel telecomando. Ricollega serve quando la TV è già accesa.";
+
+"Gestisci associazione" = "Gestisci associazione";
+
+"Configura un’altra TV" = "Configura un’altra TV";
+
+"Accendi la TV sulla stessa rete del Mac tramite Wake-on-LAN." = "Accendi la TV sulla stessa rete del Mac tramite Wake-on-LAN.";
+
+"MAC della TV" = "MAC della TV";
+
+"Rilevalo con la TV collegata. Usa il MAC Wi-Fi o Ethernet della connessione attiva." = "Rilevalo con la TV collegata. Usa il MAC Wi-Fi o Ethernet della connessione attiva.";
+
+"Impostazioni di rete" = "Impostazioni di rete";
+
+"Indirizzo broadcast" = "Indirizzo broadcast";
+
+"Calcolato dalla rete quando possibile. Modificalo solo se conosci la sottorete della TV." = "Calcolato dalla rete quando possibile. Modificalo solo se conosci la sottorete della TV.";
+
+"Sulla TV abilita l’accensione tramite Wi-Fi nelle impostazioni per dispositivi mobili." = "Sulla TV abilita l’accensione tramite Wi-Fi nelle impostazioni per dispositivi mobili.";
+
+"Controlli" = "Controlli";
