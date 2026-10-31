@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.4 — 31 ottobre 2026 · build 29
+
+Ricollegamento limitato dopo l’accensione, nome TV in testata e ritorno al telecomando dopo aver nascosto le impostazioni. Screenshot aggiornati. Vedi [note della release](RELEASE-NOTES-1.0.4.md).
+
 ## 1.0.3 — 27 ottobre 2026 · build 25
 
 Small bugfix.

@@ -58,14 +58,14 @@ struct RemoteView: View {
         HStack(spacing: 11) {
             Image(nsImage: RemoteIcon.menuBar()).resizable().scaledToFit().frame(width: 26, height: 31)
             VStack(alignment: .leading, spacing: 4) {
-                Text("LG TV").font(.system(size: 20, weight: .semibold))
+                Text(tv.connected ? (tv.displayName.isEmpty ? "LG TV" : tv.displayName) : L("Telecomando LG")).font(.system(size: 20, weight: .semibold)).lineLimit(2)
                 HStack(spacing: 5) {
                     Circle().fill(tv.connected ? Color.green : Color.secondary).frame(width: 6, height: 6)
                     Text(tv.status).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
                 }
             }
             Spacer()
-            circleButton(tv.settings ? "xmark" : "gearshape", tv.settings ? L("Chiudi impostazioni") : L("Impostazioni")) { tv.settings.toggle() }
+            circleButton(tv.settings ? "appletvremote.gen4" : "gearshape", tv.settings ? L("Torna al telecomando") : L("Impostazioni")) { tv.settings.toggle() }
         }
     }
     private var controls: some View {
@@ -215,6 +215,10 @@ struct RemoteView: View {
                 Image(systemName: "tv").font(.system(size: 22)).foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 5) {
                     Text(L("TV associata")).font(.headline)
+                    TextField(L("Nome TV"), text: $tv.displayName).textFieldStyle(.roundedBorder)
+                        .onChange(of: tv.displayName) { value in
+                            UserDefaults.standard.set(String(value.prefix(80)), forKey: "tvDisplayName")
+                        }
                     Text(tv.host).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
                     Text(tv.connected ? L("Collegamento attivo") : L("Associazione salvata"))
                         .font(.system(size: 11)).foregroundStyle(.secondary)

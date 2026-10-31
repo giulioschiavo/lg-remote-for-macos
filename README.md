@@ -59,7 +59,7 @@ LG NetCast TVs, non-webOS TVs and external HDMI set-top boxes are outside the su
 
 ## Installation
 
-Download [LG Remote 1.0.3 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.3/LG-Remote-1.0.3-macOS-arm64.zip) from [Release v1.0.3](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.3), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
+Download [LG Remote 1.0.4 for Apple Silicon](https://github.com/giulioschiavo/lg-remote-for-macos/releases/download/v1.0.4/LG-Remote-1.0.4-macOS-arm64.zip) from [Release v1.0.4](https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.4), extract the app and move **Telecomando LG.app** to Applications. Its displayed name follows your app language.
 
 Current locally packaged builds are ad-hoc signed, **not Developer ID signed or notarized**. macOS may display an unverified-developer warning. Build from source if you prefer to inspect and compile the code. Developer ID signing and notarization are planned for easier distribution.
 

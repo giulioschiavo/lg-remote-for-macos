@@ -1,13 +1,13 @@
 # Passaggio progetto LG Remote per macOS
 
-Aggiornato: 27 ottobre 2026. Versione **1.0.3, build 25**, Apple Silicon arm64, macOS 13+.
+Aggiornato: 27 ottobre 2026. Versione **1.0.4, build 29**, Apple Silicon arm64, macOS 13+.
 
 ## Distribuzione
 
 Repository: https://github.com/giulioschiavo/lg-remote-for-macos
-Release: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.3
-Pacchetto: `Downloads/LG-Remote-1.0.3-macOS-arm64.zip`.
-SHA-256: `8132edfc13b13685285be48f378cb3725fb725eb1230e0830842bf852109ea84`.
+Release: https://github.com/giulioschiavo/lg-remote-for-macos/releases/tag/v1.0.4
+Pacchetto: `Downloads/LG-Remote-1.0.4-macOS-arm64.zip`.
+SHA-256: `d6ed227426be69d84add523e29cfc51ac1196906ce5c3323a0999b78d51257a2`.
 Firma ad-hoc; nessun Developer ID o notarizzazione. Release pubblicata come Latest; API, download pubblico, SHA256 e binario installato verificati il 27 ottobre 2026.
 
 ## Decisioni da conservare
@@ -35,3 +35,13 @@ Prima delle modifiche verificare file e stato remoto. La versione1.0.1 rimane re
 TV inizialmente irraggiungibile su3001; cinque pacchetti WoL da terminale l’hanno resa raggiungibile. Ricollegamento WSS e spegnimento dall’app confermati. Correzione: Accendi resta disponibile durante connessione; interrompe tentativo/discovery prima del burst. Timeout trasporto5s separato da autorizzazione/certificato60s; eventuale unica ricerca identità8s resta limitata. Nessun falso errore di autorizzazione per TV spenta. Pubblicazione1.0.2 conservata; questa prova non pubblicata.
 
 - Note pubbliche1.0.3 richieste dall’utente: Small bugfix. Non sostituire1.0.2. TV spenta dopo la prova, lasciare in standby.
+
+## 31 ottobre2026 — prova locale1.0.4 build26
+
+Utente conferma risveglio dopo una notte riuscito, ma UI ancora nonraggiungibile. Causa: singolo tentativo5s dopoWoL. Aggiunta finestra di ricollegamento esplicito40s con tick5s, senza discovery oservizi periodici. Errori rete/timeout e statoActiveStandby iniziale non cancellano il ciclo; rifiuto certificato/autorizzazione, azioniutente e cambioTV lo interrompono. Test asincroni simulati: successo ritardato, limite40s, cancellazione. Da provare nuova sequenza sullaTV; nessun comando power inviato durante sviluppo. Nessuna nuova pubblicazioneGitHub.
+
+- Build27 locale: nome TV in testata al posto del titolo generico, statoWSS separato. Nome ricavato da discovery/getSystemInfo se disponibile, salvato localmente e modificabile nella schedaTV. Non modifica i permessi di associazione; se non disponibile resta LGTV.
+
+- Build27: titolo disconnessa = nomeapp localizzato; collegata = nomeTV. Anteprime dei due stati controllate e build27 installata, precedente26 in ZIP.
+
+- Release1.0.4 build29: nomeTV connessa/nomeapp disconnessa; icona telecomando con tooltip, nessun testo visibile; nascondendo il pannello si torna alla home. Otto screenshot IT/EN verificati, test e firma superati. Installata build29 identica al pacchetto. Utente conferma Wake-on-LAN notturno riuscito; nuova finestra retry resta da validare su avvio lento reale.

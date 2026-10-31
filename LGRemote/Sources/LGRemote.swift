@@ -119,6 +119,7 @@ enum WakeOnLAN {
 
 @MainActor
 final class TVRemote: NSObject, ObservableObject {
+    @Published var displayName = UserDefaults.standard.string(forKey: "tvDisplayName") ?? ""
     @Published var host = UserDefaults.standard.string(forKey: "host") ?? ""
     @Published var mac = UserDefaults.standard.string(forKey: "mac") ?? ""
     @Published var broadcast = UserDefaults.standard.string(forKey: "broadcast") ?? "192.168.1.255"
@@ -146,6 +147,7 @@ final class TVRemote: NSObject, ObservableObject {
     private var identityTask: Task<Void, Never>?
     private var wakeTask: Task<Void, Never>?
     private var wakeGeneration = UUID()
+    private var wakeInProgress = false
     private var session = URLSession(configuration: .default)
     private var secureTransport = false
     private var healthDeadline: Task<Void, Never>?
@@ -172,6 +174,7 @@ final class TVRemote: NSObject, ObservableObject {
         if !priorHost.isEmpty && priorHost != host.trimmingCharacters(in: .whitespacesAndNewlines) {
             UserDefaults.standard.removeObject(forKey: "tvDeviceID")
             UserDefaults.standard.removeObject(forKey: "pairingLegacyHost")
+            displayName = ""; UserDefaults.standard.removeObject(forKey: "tvDisplayName")
         }
         host = host.trimmingCharacters(in: .whitespacesAndNewlines)
         mac = mac.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -183,13 +186,15 @@ final class TVRemote: NSObject, ObservableObject {
         disconnect()
         connect(allowRediscovery: allowRediscovery)
     }
-    func disconnect() {
+    func disconnect(preservingWake: Bool = false) {
         cancelDiscovery()
         generation = UUID()
         activeHost = nil
         identityTask?.cancel(); identityTask = nil; detectingMAC = false
         macCandidates = []; macDetectionMessage = ""
-        wakeGeneration = UUID(); wakeTask?.cancel(); wakeTask = nil
+        if !preservingWake {
+            wakeGeneration = UUID(); wakeTask?.cancel(); wakeTask = nil; wakeInProgress = false
+        }
         healthProbe = UUID(); healthDeadline?.cancel(); healthDeadline = nil
         reader?.cancel(); deadline?.cancel(); poller?.cancel(); inputWorker?.cancel()
         inputWorker = nil; inputEvents.removeAll()
@@ -274,16 +279,17 @@ final class TVRemote: NSObject, ObservableObject {
                 let unavailable = networkError.domain == NSURLErrorDomain && [NSURLErrorCannotConnectToHost, NSURLErrorTimedOut, NSURLErrorNotConnectedToInternet, NSURLErrorNetworkConnectionLost, NSURLErrorCannotFindHost, NSURLErrorDNSLookupFailed].contains(networkError.code)
                 let shuttingDown = powerOffPending
                 let wasConnected = connected
-                disconnect()
+                let legacyRetry = !wasConnected && useSecure && TVTLSDelegate.permitsLegacyFallback(error, account: account)
+                disconnect(preservingWake: wakeInProgress && !wasConnected && (unavailable || legacyRetry))
                 if shuttingDown {
                     status = L("TV disconnessa dopo richiesta spegnimento")
                     self.error = nil
-                } else if !wasConnected, useSecure, TVTLSDelegate.permitsLegacyFallback(error, account: account) {
+                } else if legacyRetry {
                     connect(forcePairing: forcePairing, allowRediscovery: allowRediscovery, useSecure: false)
                 } else if !wasConnected, allowRediscovery, !forcePairing, let savedIdentity {
                     rediscoverSavedTV(identity: savedIdentity)
                 } else {
-                    status = L("TV non raggiungibile")
+                    status = wakeInProgress ? L("TV in avvio… Attendo il collegamento.") : L("TV non raggiungibile")
                     self.error = unavailable ? nil : L("Collegamento non riuscito. Riprova dalle impostazioni con la TV accesa.")
                 }
             }
@@ -295,13 +301,13 @@ final class TVRemote: NSObject, ObservableObject {
         deadline = Task {
             try? await Task.sleep(nanoseconds: awaitingApproval ? 60_000_000_000 : 5_000_000_000)
             guard !Task.isCancelled, token == generation, !connected else { return }
-            disconnect()
+            disconnect(preservingWake: wakeInProgress && !awaitingApproval)
             if awaitingApproval {
                 error = L("Autorizzazione non completata. Riprova dalle impostazioni con la TV accesa.")
             } else if let savedIdentity {
                 rediscoverSavedTV(identity: savedIdentity)
             } else {
-                status = L("TV non raggiungibile")
+                status = wakeInProgress ? L("TV in avvio… Attendo il collegamento.") : L("TV non raggiungibile")
                 error = nil
             }
         }
@@ -315,7 +321,7 @@ final class TVRemote: NSObject, ObservableObject {
         let id = body["id"] as? String ?? ""
         if id == "power-state", type != "error", let state = payload["state"] as? String,
            Self.isStandby(state) {
-            disconnect(); status = L("TV in standby"); error = nil
+            disconnect(preservingWake: wakeInProgress); status = wakeInProgress ? L("TV in avvio… Attendo il collegamento.") : L("TV in standby"); error = nil
             return
         }
         if type == "registered" {
@@ -332,6 +338,7 @@ final class TVRemote: NSObject, ObservableObject {
                 try? await send(["id": "power-state", "type": "subscribe", "uri": "ssap://com.webos.service.tvpower/power/getPowerState"], over: powerSocket)
                 guard connected else { return }
                 await refresh()
+                await refreshName()
             }
             if mac.isEmpty { detectMAC(automatic: true) }
             poller = Task {
@@ -414,6 +421,21 @@ final class TVRemote: NSObject, ObservableObject {
         if let number = value["volume"] as? NSNumber { volume = min(100, max(0, number.doubleValue)); volumeKnown = true }
         if let state = value["muted"] as? Bool { muted = state }
         else if let state = value["muteStatus"] as? Bool { muted = state }
+    }
+    func refreshName() async {
+        guard displayName.isEmpty else { return }
+        let token = generation
+        guard let info = try? await request("system/getSystemInfo"), token == generation, connected else { return }
+        for field in ["deviceName", "friendlyName", "modelName"] {
+            if let raw = info[field] as? String {
+                let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !name.isEmpty && !name.hasPrefix("HE_") {
+                    displayName = String(name.prefix(80))
+                    UserDefaults.standard.set(displayName, forKey: "tvDisplayName")
+                    break
+                }
+            }
+        }
     }
     func refresh() async {
         await refreshVolume()
@@ -516,14 +538,27 @@ final class TVRemote: NSObject, ObservableObject {
         if connecting || discoveringTVs || preparingTV { disconnect() }
         wakeTask?.cancel(); let wakeToken = UUID(); wakeGeneration = wakeToken
         let target = host, wakeMAC = mac, wakeBroadcast = broadcast
+        wakeInProgress = true
         error = nil; status = L("Accensione richiesta…")
         wakeTask = Task {
+            defer {
+                if wakeToken == wakeGeneration { wakeInProgress = false; wakeTask = nil }
+            }
             do {
                 guard wakeToken == wakeGeneration, target == host else { return }
                 try await WakeOnLAN.sendBurst(mac: wakeMAC, broadcast: wakeBroadcast)
-                try await Task.sleep(nanoseconds: 5_000_000_000)
-                guard !Task.isCancelled, wakeToken == wakeGeneration, target == host, !connected, !connecting else { return }
-                connect()
+                status = L("TV in avvio… Attendo il collegamento.")
+                _ = try await WakeReconnect.run {
+                    guard wakeToken == wakeGeneration, target == host else { return true }
+                    if connected { return true }
+                    if !connecting { connect(allowRediscovery: false) }
+                    return connected
+                }
+                guard !Task.isCancelled, wakeToken == wakeGeneration, target == host else { return }
+                if !connected && !connecting {
+                    status = L("TV non raggiungibile")
+                    error = L("Accensione inviata, ma la TV non risponde ancora. Riprova il collegamento dalle impostazioni.")
+                }
             } catch is CancellationError { return }
             catch {
                 guard wakeToken == wakeGeneration else { return }
@@ -609,7 +644,12 @@ final class TVRemote: NSObject, ObservableObject {
         discoveryTask = Task {
             let detectedBroadcast = await TVNetworkIdentity.broadcast(for: selected.host)
             guard !Task.isCancelled, token == discoveryGeneration else { return }
-            if !sameTV { mac = ""; broadcast = "" }
+            if !sameTV { mac = ""; broadcast = ""; displayName = "" }
+            if displayName.isEmpty && selected.name != "LG webOS TV" {
+                displayName = String(selected.name.prefix(80))
+                UserDefaults.standard.set(displayName, forKey: "tvDisplayName")
+            }
+            UserDefaults.standard.set(displayName, forKey: "tvDisplayName")
             if let detectedBroadcast { broadcast = detectedBroadcast }
             else if previous != selected.host { broadcast = "" }
             if let identity = selected.deviceID {
@@ -669,7 +709,8 @@ final class TVRemote: NSObject, ObservableObject {
         disconnect()
         for key in ["mac", "broadcast", "pairedHost", "tvDeviceID", "pairingLegacyHost", "permissionRevision.\(savedHost)"] { UserDefaults.standard.removeObject(forKey: key) }
         UserDefaults.standard.set("", forKey: "host")
-        host = ""; mac = ""; broadcast = ""
+        host = ""; mac = ""; broadcast = ""; displayName = ""
+        UserDefaults.standard.removeObject(forKey: "tvDisplayName")
         discoveredTVs = []; discoveryMessage = ""
         UserDefaults.standard.set(0, forKey: "settingsPane")
         error = nil; settings = true; status = L("Collegamento rimosso")

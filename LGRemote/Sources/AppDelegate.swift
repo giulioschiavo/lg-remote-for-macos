@@ -116,6 +116,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.post(name: NSNotification.Name("LGTouchpadStop"), object: nil)
         tv.stopPointerMotion()
         panel.orderOut(nil)
+        tv.settings = false
         item.button?.highlight(false)
         stopClosingMonitors()
     }

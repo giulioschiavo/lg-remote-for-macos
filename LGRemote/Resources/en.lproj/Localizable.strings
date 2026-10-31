@@ -199,3 +199,11 @@
 "Se la TV è in standby, premi Accendi." = "If the TV is in standby, choose Turn On.";
 
 "Collegamento non riuscito. Riprova dalle impostazioni con la TV accesa." = "Connection failed. Try again in Settings with the TV on.";
+
+"TV in avvio… Attendo il collegamento." = "TV starting… Waiting to connect.";
+
+"Accensione inviata, ma la TV non risponde ancora. Riprova il collegamento dalle impostazioni." = "Wake request sent, but the TV is not responding yet. Retry the connection in Settings.";
+
+"Nome TV" = "TV name";
+
+"Torna al telecomando" = "Back to remote";

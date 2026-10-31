@@ -8,6 +8,7 @@ enum PreviewExport {
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
         let tv = TVRemote()
+        tv.displayName = "LG webOS TV"
         tv.host = "LGwebOSTV.local"; tv.mac = "02:00:00:00:00:01"; tv.broadcast = "192.168.1.255"
         tv.connected = true; tv.status = L("Collegata")
         tv.settings = CommandLine.arguments.contains("--preview-settings")
