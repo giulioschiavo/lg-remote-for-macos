@@ -1,6 +1,6 @@
 # Passaggio progetto LG Remote per macOS
 
-Aggiornato: 27 ottobre 2026. Versione **1.0.4, build 29**, Apple Silicon arm64, macOS 13+.
+Aggiornato: 31 ottobre 2026. Versione **1.0.4, build 29**, Apple Silicon arm64, macOS 13+.
 
 ## Distribuzione
 
@@ -45,3 +45,7 @@ Utente conferma risveglio dopo una notte riuscito, ma UI ancora nonraggiungibile
 - Build27: titolo disconnessa = nomeapp localizzato; collegata = nomeTV. Anteprime dei due stati controllate e build27 installata, precedente26 in ZIP.
 
 - Release1.0.4 build29: nomeTV connessa/nomeapp disconnessa; icona telecomando con tooltip, nessun testo visibile; nascondendo il pannello si torna alla home. Otto screenshot IT/EN verificati, test e firma superati. Installata build29 identica al pacchetto. Utente conferma Wake-on-LAN notturno riuscito; nuova finestra retry resta da validare su avvio lento reale.
+
+## Pubblicazione finale1.0.4
+
+Release pubblicata come Latest il31ottobre2026. Download pubblico integro, SHA256 e binario identici alla copia installata, versione1.0.4 build29. Otto screenshot IT/EN pubblicati con icona telecomando senza testo visibile. Note pubbliche riportano le modifiche e distinguono test simulati dalla verifica reale dell’avvio lento ancora da completare.
